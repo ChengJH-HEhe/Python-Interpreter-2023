@@ -1,21 +1,46 @@
 #include "Any_op.h"
 #include "int2048.h"
+#include "funcvar.h"
+#include <iomanip>
 #include <map>
 #include <string>
 #include <vector>
+// 未连接上 头文件，
+extern Scope scope;
+// scope 类似一个栈，0指向全局空间，back指向当前空间
 
-using Variabletype = std::map<std::string, std::any>::iterator;
+// TODO 元组化简
+// 由于在新建变量时，如果是声明变量，返回值是Pair
 
-// 元组化简
+template<typename T>
+bool pd(std::any const &x) {
+    return std::any_cast<T>(&x);
+}
+
+template<typename T> 
+T& Cast(std::any &x) {
+    return std::any_cast<T &>(x);
+}
+template<typename T> 
+T const &Cast(std::any const &x) {
+    return std::any_cast<T const &>(x);
+}
+
+//加入inline ?
+inline bool non(std::any x) {
+    return !x.has_value();
+}
+
 void simply(std::any &x) {
   if (pd<std::vector<std::any>>(x)) {
     std::vector<std::any> &y = Cast<std::vector<std::any>>(x);
     for (auto &z : y)
       simply(z);
-  } else if (pd<Variabletype>(x))
-    x = Cast<Variabletype>(x)->second;
+  } else if (pd<std::pair<std::string, int>>(x)){
+    auto tmp = Cast<std::pair<std::string, int>>(x);
+    x = scope.mp[tmp.second][tmp.first];
+  }
 }
-
 // 类型转换
 double toFloat(std::any x) {
   if (pd<std::string>(x)) {
@@ -23,9 +48,9 @@ double toFloat(std::any x) {
   } else if (pd<Bigint>(x)) {
     return Cast<Bigint>(x).toDouble();
   } else if (pd<double>(x)) {
-    return bool(Cast<float>(x));
+    return (Cast<float>(x));
   } else if (pd<bool>(x)) {
-    return Cast<bool>(x);
+    return Cast<bool>(x)? 1.0 : 0.0;
   } else
     return 0.0;
 }
@@ -112,13 +137,13 @@ std::any operator/(std::any x, std::any y) { return toFloat(x) / toFloat(y); }
 std::any operator%(std::any x, std::any y) {
   if (pd<double>(x) || pd<double>(y)) {
     double a = toFloat(x), b = toFloat(y);
-    return a - iinv(a, b) * b;
+    return a - idiv(a, b) * b;
   } else {
     Bigint a = toInt(x), b = toInt(y);
     return a % b;
   }
 }
-std::any iinv(std::any x, std::any y) {
+std::any idiv(std::any x, std::any y) {
   if (pd<double>(x) || pd<double>(y)) {
     return floor(toFloat(x) / toFloat(y));
   } else
@@ -126,7 +151,7 @@ std::any iinv(std::any x, std::any y) {
 }
 
 
-// 比较
+// 比较 
 bool operator<(std::any x, std::any y) {
   if (pd<std::string>(x))
     return pd<std::string>(y) && (Cast<std::string>(x) < Cast<std::string>(y));
@@ -157,9 +182,59 @@ bool operator<=(std::any x, std::any y) { return !(x > y); }
 
 //Augassign
 
-std::any operator +=(std::any &, std::any);
-std::any operator -=(std::any &, std::any);
-std::any operator *=(std::any &, std::any);
-std::any operator /=(std::any &, std::any);
-std::any iinv(std::any &, std::any);
-std::any operator %=(std::any &, std::any);
+std::any& operator +=(std::any &a, std::any &b) {
+  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+    Cast<Bigint>(a) += Cast<Bigint>(b);
+    return a;
+  }
+  return a = a+b;
+}
+std::any& operator -=(std::any &a, std::any &b) {
+  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+    Cast<Bigint>(a) -= Cast<Bigint>(b);
+    return a;
+  }
+  return a = a - b;
+}
+std::any& operator *=(std::any &a, std::any b) {
+  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+    Cast<Bigint>(a) *= Cast<Bigint>(b);
+    return a;
+  }
+  return a = a * b;
+}
+std::any& operator /=(std::any &a, std::any b) {
+  return a = a / b;
+}
+std::any& iDiv(std::any &a, std::any b) {
+  return a = idiv(a,b);
+}
+std::any& operator %=(std::any &a, std::any b) {
+  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+    Cast<Bigint>(a) %= Cast<Bigint>(b);
+    return a;
+  }
+  return a = a % b;
+}
+
+std::ostream& operator<<(std::ostream &os, std::any now){
+  std::any tmp;
+  if(pd<std::pair<std::string,std::any>>(now)) tmp = Cast<std::pair<std::string,std::any>>(now).second;
+  else tmp = now;
+  if(pd<std::vector<std::any>>(now)) {
+    std::vector<std::any> & list = Cast<std::vector<std::any>>(now);
+    os << list[0];
+    for(int i = 1; list[i] != list.end(); ++i)
+      os << " " << list[i];
+  }else if(pd<std::string>(now)){
+    std::string s = Cast<std::string>(now);
+    os << s.substr(1, s.size() - 1);
+  }else if(pd<double>(now)) {
+    os << std::fixed << std::setprecision(6) << Cast<double>(now);
+  }else if(pd<Bigint>(now)) {
+    os << Cast<std::any>(now);
+  }else if(pd<bool>(now)) {
+    os << (Cast<bool>(now) ? "True" : "False");
+  }else if(non(now)) os << "None";
+  return os;
+}

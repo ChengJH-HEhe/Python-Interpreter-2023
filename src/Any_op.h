@@ -10,25 +10,20 @@ using Bigint = sjtu::int2048;
 
 //判断类型
 template<typename T>
-bool pd(std::any const &x) {
-    return std::any_cast<T>(&x);
-}
+bool pd(std::any const &x);
 
 template<typename T> 
-T& Cast(std::any &x) {
-    return std::any_cast<T &>(x);
-}
+T& Cast(std::any &x);
+
 template<typename T> 
-T const &Cast(std::any const &x) {
-    return std::any_cast<T const &>(x);
-}
+T const &Cast(std::any const &);
 
 //加入inline ?
-inline bool non(std::any x) {
-    return !x.has_value();
-}
+bool non(std::any);
+
 //元组化简
-void simply(std::any&);
+template<typename T>
+void simply(T&);
 
 //基本类型
 // int float str
@@ -47,7 +42,7 @@ std::any operator * (std::any,std::any);
 std::string mulstr (std::string, Bigint);
 std::any operator / (std::any,std::any);
 std::any operator % (std::any,std::any);
-std::any iinv (std::any ,std::any);
+std::any idiv (std::any ,std::any);
 
 
 // > < = <= >= !=
@@ -59,10 +54,14 @@ bool operator >= (std::any, std::any);
 bool operator <= (std::any, std::any);
 
 //augassign
-std::any operator +=(std::any &, std::any);
-std::any operator -=(std::any &, std::any);
-std::any operator *=(std::any &, std::any);
-std::any operator /=(std::any &, std::any);
-std::any iinv(std::any &, std::any);
-std::any operator %=(std::any &, std::any);
+std::any& operator +=(std::any &, const std::any &);
+std::any& operator -=(std::any &, const std::any &);
+std::any& operator *=(std::any &, std::any );
+std::any& operator /=(std::any &, std::any );
+std::any& iDiv(std::any &, std::any);
+std::any& operator %=(std::any &, std::any );
+std::ostream& operator<<(std::ostream&, std::any);
+//-
+std::any setNega(std::any);
+
 #endif

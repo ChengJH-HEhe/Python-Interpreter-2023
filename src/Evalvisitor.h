@@ -58,11 +58,11 @@ virtual std::any visitComp_op(Python3Parser::Comp_opContext *) override;
 
 virtual std::any visitArith_expr(Python3Parser::Arith_exprContext *) override;
 
-virtual std::any visitAddorsub_op(Python3Parser::Addorsub_opContext *) override;
+//virtual std::any visitAddorsub_op(Python3Parser::Addorsub_opContext *) override;
 
 virtual std::any visitTerm(Python3Parser::TermContext *) override;
 
-virtual std::any visitMuldivmod_op(Python3Parser::Muldivmod_opContext *) override;
+//virtual std::any visitMuldivmod_op(Python3Parser::Muldivmod_opContext *) override;
 
 virtual std::any visitFactor(Python3Parser::FactorContext *) override;
 
@@ -74,7 +74,7 @@ virtual std::any visitAtom(Python3Parser::AtomContext *) override;
 
 virtual std::any visitTestlist(Python3Parser::TestlistContext *) override;
 
-virtual std::any visitArglist(Python3Parser::ArglistContext *) override;
+//virtual std::any visitArglist(Python3Parser::ArglistContext *) override;
 
 virtual std::any visitArgument(Python3Parser::ArgumentContext *) override;
 

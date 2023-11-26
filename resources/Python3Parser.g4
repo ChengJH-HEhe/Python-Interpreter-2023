@@ -31,7 +31,6 @@ return_stmt: 'return' (testlist)?;
 compound_stmt: if_stmt | while_stmt | funcdef ;
 
 // if test : if?
-//testlist!
 
 //test suite
 if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ('else' ':' suite)?;
@@ -54,6 +53,7 @@ addorsub_op: '+'|'-';
 term: factor (muldivmod_op factor)*;
 muldivmod_op: '*'|'/'|'//'|'%';
 factor: ('+'|'-') factor | atom_expr;
+
 atom_expr: atom trailer?;
 trailer: '(' (arglist)? ')' ;
 
