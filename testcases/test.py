@@ -1,5 +1,2 @@
-def a(b,c):
-  b+=c
-  return c
-d=1
-a(d,2)
+two = 0 + 1 * 2
+print(two)

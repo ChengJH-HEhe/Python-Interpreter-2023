@@ -1,9 +1,11 @@
 #If Statement
-a = 1
+a = 2
 b = 2
+print(a)
+print(b)
 if a < b:
-    print(b)
-# elif a > b:
-#     print(a)
-# else:
-#     print("equal")
+    print(b,1)
+elif a > b:
+    print(a,2)
+else:
+    print("equal")

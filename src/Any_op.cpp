@@ -12,20 +12,8 @@ extern Scope scope;
 
 // TODO 元组化简
 // 由于在新建变量时，如果是声明变量，返回值是Pair
-
-
-
-template <typename T> bool pd(std::any const &x) {
-  return std::any_cast<T>(&x);
-}
-
-template <typename T> T &Cast(std::any &x) { return std::any_cast<T &>(x); }
-template <typename T> T const &Cast(std::any const &x) {
-  return std::any_cast<T const &>(x);
-}
-
 // 加入inline ?
-inline bool non(std::any x) { return !x.has_value(); }
+bool non(std::any x) { return !x.has_value(); }
 
 void simply(std::any &x) {
   if (pd<std::vector<std::any>>(x)) {
@@ -174,34 +162,34 @@ bool operator==(std::any x, std::any y) {
 }
 bool operator!=(std::any x, std::any y) { return !(x == y); }
 bool operator>=(std::any x, std::any y) { return !(x < y); }
-bool operator<=(std::any x, std::any y) { return !(x > y); }
+bool operator<=(std::any x, std::any y) { return !(y < x); }
 
 // Augassign
 
-std::any &operator+=(std::any &a, std::any &b) {
+std::any &operator+=(std::any &a, std::any const &b) {
   if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) += Cast<Bigint>(b);
     return a;
   }
   return a = a + b;
 }
-std::any &operator-=(std::any &a, std::any &b) {
+std::any &operator-=(std::any &a, std::any const &b) {
   if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) -= Cast<Bigint>(b);
     return a;
   }
   return a = a - b;
 }
-std::any &operator*=(std::any &a, std::any b) {
+std::any &operator*=(std::any &a, std::any const &b) {
   if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) *= Cast<Bigint>(b);
     return a;
   }
   return a = a * b;
 }
-std::any &operator/=(std::any &a, std::any b) { return a = a / b; }
-std::any &iDiv(std::any &a, std::any b) { return a = idiv(a, b); }
-std::any &operator%=(std::any &a, std::any b) {
+std::any &operator/=(std::any &a, std::any const &b) { return a = a / b; }
+std::any &iDiv(std::any &a, std::any const &b) { return a = idiv(a, b); }
+std::any &operator%=(std::any &a, std::any const &b) {
   if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) %= Cast<Bigint>(b);
     return a;
@@ -222,7 +210,7 @@ std::ostream &operator<<(std::ostream &os, std::any now) {
       os << " " << list[i];
   } else if (pd<std::string>(now)) {
     std::string s = Cast<std::string>(now);
-    os << s.substr(1, s.size() - 1);
+    os << s;
   } else if (pd<double>(now)) {
     os << std::fixed << std::setprecision(6) << Cast<double>(now);
   } else if (pd<Bigint>(now)) {
@@ -232,4 +220,16 @@ std::ostream &operator<<(std::ostream &os, std::any now) {
   } else if (non(now))
     os << "None";
   return os;
+}
+std::any setNega(std::any a) {
+  if(pd<std::vector<std::any>>(a)) {
+     std::vector<std::any> tmp, tmp1 = Cast<std::vector<std::any>>(a);
+     for(auto y : tmp1) 
+      tmp.emplace_back(setNega(y));
+    return tmp;
+  } else {
+    if(pd<Bigint>(a)) return -Cast<Bigint>(a);
+    else if(pd<double>(a)) return -Cast<double>(a);
+    else return -toInt(a);
+  }
 }

@@ -12,9 +12,9 @@ virtual std::any visitFile_input(Python3Parser::File_inputContext *) override;
 
 virtual std::any visitFuncdef(Python3Parser::FuncdefContext *) override;
 
-virtual std::any visitParameters(Python3Parser::ParametersContext *) override;
+//virtual std::any visitParameters(Python3Parser::ParametersContext *) override;
 
-virtual std::any visitTypedargslist(Python3Parser::TypedargslistContext *) override;
+//virtual std::any visitTypedargslist(Python3Parser::TypedargslistContext *) override;
 
 virtual std::any visitTfpdef(Python3Parser::TfpdefContext *) override;
 
@@ -26,7 +26,7 @@ virtual std::any visitSmall_stmt(Python3Parser::Small_stmtContext *) override;
 
 virtual std::any visitExpr_stmt(Python3Parser::Expr_stmtContext *) override;
 
-virtual std::any visitAugassign(Python3Parser::AugassignContext *) override;
+//virtual std::any visitAugassign(Python3Parser::AugassignContext *) override;
 
 virtual std::any visitFlow_stmt(Python3Parser::Flow_stmtContext *) override;
 
@@ -54,7 +54,7 @@ virtual std::any visitNot_test(Python3Parser::Not_testContext *) override;
 
 virtual std::any visitComparison(Python3Parser::ComparisonContext *) override;
 
-virtual std::any visitComp_op(Python3Parser::Comp_opContext *) override;
+//virtual std::any visitComp_op(Python3Parser::Comp_opContext *) override;
 
 virtual std::any visitArith_expr(Python3Parser::Arith_exprContext *) override;
 
@@ -68,7 +68,7 @@ virtual std::any visitFactor(Python3Parser::FactorContext *) override;
 
 virtual std::any visitAtom_expr(Python3Parser::Atom_exprContext *) override;
 
-virtual std::any visitTrailer(Python3Parser::TrailerContext *) override;
+//virtual std::any visitTrailer(Python3Parser::TrailerContext *) override;
 
 virtual std::any visitAtom(Python3Parser::AtomContext *) override;
 

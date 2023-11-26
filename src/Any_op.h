@@ -9,13 +9,14 @@
 using Bigint = sjtu::int2048;
 
 
-template <typename T> T &Cast(std::any &);
+template <typename T> bool pd(std::any const &x) {
+  return std::any_cast<T>(&x);
+}
 
-// 判断类型
-template <typename T> bool pd(std::any const &);
-
-template <typename T> T const &Cast(std::any const &);
-
+template <typename T> T &Cast(std::any &x) { return std::any_cast<T &>(x); }
+template <typename T> T const &Cast(std::any const &x) {
+  return std::any_cast<T const &>(x);
+}
 bool non(std::any);
 
 // 解析变量
@@ -53,10 +54,10 @@ bool operator<=(std::any, std::any);
 // augassign
 std::any &operator+=(std::any &, const std::any &);
 std::any &operator-=(std::any &, const std::any &);
-std::any &operator*=(std::any &, std::any);
-std::any &operator/=(std::any &, std::any);
-std::any &iDiv(std::any &, std::any);
-std::any &operator%=(std::any &, std::any);
+std::any &operator*=(std::any &, const std::any &);
+std::any &operator/=(std::any &, const std::any &);
+std::any &iDiv(std::any &, const std::any &);
+std::any &operator%=(std::any &, const std::any&);
 std::ostream &operator<<(std::ostream &, std::any);
 //-
 std::any setNega(std::any);
