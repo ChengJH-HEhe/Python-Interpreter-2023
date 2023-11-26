@@ -16,6 +16,7 @@
 struct Scope {
   std::vector<std::unordered_map<std::string, std::any>> mp;
   int find(std::string);
+  std::shared_ptr<Python3Parser::FuncdefContext> find_func(std::string);
   void init();
   void change(std::pair<std::string, int>, std::any &, char);
   std::any getval(std::pair<std::string, int>);

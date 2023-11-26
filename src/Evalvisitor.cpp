@@ -33,13 +33,12 @@ std::any EvalVisitor::visitTfpdef(Python3Parser::TfpdefContext *ctx) {
 std::any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx) {
   std::string name = ctx->NAME()->getText();
   f.create(name, ctx);
-  // *this 遍历树的函数指针
+  // evalvisitor 遍历树的函数指针
   // ctx 存树上节点的子信息
   return {};
 }
 
-std::any
-EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
+std::any EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
   if (ctx->if_stmt()) {
     auto &&v = visitIf_stmt(ctx->if_stmt());
     if (pd<flow>(v))
@@ -93,14 +92,15 @@ std::any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx) {
   if (!ctx->IF())
     return {};
   auto y = ctx->test();
+  auto zz = ctx->suite();
   int sz = y.size(), i = 0;
   for (; i < sz; ++i) {
     std::any &&z = visitTest(y[i]);
     if (toBool(z))
-      return visitSuite(ctx->suite(i));
+      return visitSuite(zz[i]);
   }
   if (ctx->suite(i))
-    return visitSuite(ctx->suite(i));
+    return visitSuite(zz[i]);
   return {};
 }
 
@@ -379,8 +379,7 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
       func_print(realArgument);
       return {};
     } else
-      return {};
-    // return f.func(ctx->getText(), realArgument);
+      return f.func(ctx->getText(), realArgument);
   } else
     return v;
 }
