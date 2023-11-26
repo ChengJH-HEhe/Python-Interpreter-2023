@@ -1,6 +1,6 @@
 #include "Any_op.h"
-#include "int2048.h"
 #include "funcvar.h"
+#include "int2048.h"
 #include <iomanip>
 #include <map>
 #include <string>
@@ -12,31 +12,36 @@ extern Scope scope;
 // TODO 元组化简
 // 由于在新建变量时，如果是声明变量，返回值是Pair
 
-template<typename T>
-bool pd(std::any const &x) {
-    return std::any_cast<T>(&x);
+flow::flow(FLOWSTMT a, std::any b ) {
+  word = a;
+  auto &c = Cast<std::vector<std::any>>(b);
+  for (auto &d : c)
+    simply(d);
+  // 万一是个vector 析构了（也不会寄）；加快速度
+  if (c.size() == 1)
+    an = std::move(c[0]);
+  else
+    an = std::move(c);
 }
 
-template<typename T> 
-T& Cast(std::any &x) {
-    return std::any_cast<T &>(x);
-}
-template<typename T> 
-T const &Cast(std::any const &x) {
-    return std::any_cast<T const &>(x);
+template <typename T> bool pd(std::any const &x) {
+  return std::any_cast<T>(&x);
 }
 
-//加入inline ?
-inline bool non(std::any x) {
-    return !x.has_value();
+template <typename T> T &Cast(std::any &x) { return std::any_cast<T &>(x); }
+template <typename T> T const &Cast(std::any const &x) {
+  return std::any_cast<T const &>(x);
 }
+
+// 加入inline ?
+inline bool non(std::any x) { return !x.has_value(); }
 
 void simply(std::any &x) {
   if (pd<std::vector<std::any>>(x)) {
     std::vector<std::any> &y = Cast<std::vector<std::any>>(x);
     for (auto &z : y)
       simply(z);
-  } else if (pd<std::pair<std::string, int>>(x)){
+  } else if (pd<std::pair<std::string, int>>(x)) {
     auto tmp = Cast<std::pair<std::string, int>>(x);
     x = scope.mp[tmp.second][tmp.first];
   }
@@ -50,11 +55,11 @@ double toFloat(std::any x) {
   } else if (pd<double>(x)) {
     return (Cast<float>(x));
   } else if (pd<bool>(x)) {
-    return Cast<bool>(x)? 1.0 : 0.0;
+    return Cast<bool>(x) ? 1.0 : 0.0;
   } else
     return 0.0;
 }
-bool tobool(std::any x) {
+bool toBool(std::any x) {
   if (pd<std::string>(x)) {
     return Cast<std::string>(x).size() > 0 ? true : false;
   } else if (pd<Bigint>(x)) {
@@ -66,6 +71,7 @@ bool tobool(std::any x) {
   } else
     return 0;
 }
+int toint(std::any x) { return Cast<Bigint>(x).toInt(); }
 Bigint toInt(std::any x) {
   if (pd<std::string>(x)) {
     return Bigint(Cast<std::string>(x));
@@ -78,7 +84,7 @@ Bigint toInt(std::any x) {
   } else
     return 0;
 }
-std::string tostr(std::any x) {
+std::string toStr(std::any x) {
   if (pd<std::string>(x)) {
     return Cast<std::string>(x);
   } else if (pd<int>(x)) {
@@ -150,8 +156,7 @@ std::any idiv(std::any x, std::any y) {
     return toInt(x) / toInt(y);
 }
 
-
-// 比较 
+// 比较
 bool operator<(std::any x, std::any y) {
   if (pd<std::string>(x))
     return pd<std::string>(y) && (Cast<std::string>(x) < Cast<std::string>(y));
@@ -180,61 +185,60 @@ bool operator!=(std::any x, std::any y) { return !(x == y); }
 bool operator>=(std::any x, std::any y) { return !(x < y); }
 bool operator<=(std::any x, std::any y) { return !(x > y); }
 
-//Augassign
+// Augassign
 
-std::any& operator +=(std::any &a, std::any &b) {
-  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+std::any &operator+=(std::any &a, std::any &b) {
+  if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) += Cast<Bigint>(b);
     return a;
   }
-  return a = a+b;
+  return a = a + b;
 }
-std::any& operator -=(std::any &a, std::any &b) {
-  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+std::any &operator-=(std::any &a, std::any &b) {
+  if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) -= Cast<Bigint>(b);
     return a;
   }
   return a = a - b;
 }
-std::any& operator *=(std::any &a, std::any b) {
-  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+std::any &operator*=(std::any &a, std::any b) {
+  if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) *= Cast<Bigint>(b);
     return a;
   }
   return a = a * b;
 }
-std::any& operator /=(std::any &a, std::any b) {
-  return a = a / b;
-}
-std::any& iDiv(std::any &a, std::any b) {
-  return a = idiv(a,b);
-}
-std::any& operator %=(std::any &a, std::any b) {
-  if(pd<Bigint>(a) && pd<Bigint>(b)) {
+std::any &operator/=(std::any &a, std::any b) { return a = a / b; }
+std::any &iDiv(std::any &a, std::any b) { return a = idiv(a, b); }
+std::any &operator%=(std::any &a, std::any b) {
+  if (pd<Bigint>(a) && pd<Bigint>(b)) {
     Cast<Bigint>(a) %= Cast<Bigint>(b);
     return a;
   }
   return a = a % b;
 }
 
-std::ostream& operator<<(std::ostream &os, std::any now){
+std::ostream &operator<<(std::ostream &os, std::any now) {
   std::any tmp;
-  if(pd<std::pair<std::string,std::any>>(now)) tmp = Cast<std::pair<std::string,std::any>>(now).second;
-  else tmp = now;
-  if(pd<std::vector<std::any>>(now)) {
-    std::vector<std::any> & list = Cast<std::vector<std::any>>(now);
+  if (pd<std::pair<std::string, std::any>>(now))
+    tmp = Cast<std::pair<std::string, std::any>>(now).second;
+  else
+    tmp = now;
+  if (pd<std::vector<std::any>>(now)) {
+    std::vector<std::any> &list = Cast<std::vector<std::any>>(now);
     os << list[0];
-    for(int i = 1; list[i] != list.end(); ++i)
+    for (int i = 1; list[i] != list.end(); ++i)
       os << " " << list[i];
-  }else if(pd<std::string>(now)){
+  } else if (pd<std::string>(now)) {
     std::string s = Cast<std::string>(now);
     os << s.substr(1, s.size() - 1);
-  }else if(pd<double>(now)) {
+  } else if (pd<double>(now)) {
     os << std::fixed << std::setprecision(6) << Cast<double>(now);
-  }else if(pd<Bigint>(now)) {
+  } else if (pd<Bigint>(now)) {
     os << Cast<Bigint>(now);
-  }else if(pd<bool>(now)) {
+  } else if (pd<bool>(now)) {
     os << (Cast<bool>(now) ? "True" : "False");
-  }else if(non(now)) os << "None";
+  } else if (non(now))
+    os << "None";
   return os;
 }
