@@ -1,6 +1,7 @@
+#include "../generated/Python3Parser.h"
+#include "../generated/Python3Lexer.h"
+
 #include "Evalvisitor.h"
-#include "Python3Lexer.h"
-#include "Python3Parser.h"
 #include "antlr4-runtime.h"
 #include <iostream>
 using namespace antlr4;

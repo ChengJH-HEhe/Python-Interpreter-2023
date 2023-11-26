@@ -9,7 +9,11 @@
 using Bigint = sjtu::int2048;
 
 enum FLOWSTMT { BREAK, CONTINUE, RETURN };
-
+struct flow {
+  FLOWSTMT word;
+  std::any an;
+  flow(FLOWSTMT, std::any);
+};
 template <typename T> T &Cast(std::any &);
 
 // 判断类型
@@ -22,12 +26,7 @@ bool non(std::any);
 // 解析变量
 void simply(std::any &);
 
-class flow {
-public:
-  FLOWSTMT word;
-  std::any an;
-  flow(FLOWSTMT, std::any);
-};
+
 
 // 基本类型
 //  int float str
