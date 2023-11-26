@@ -47,9 +47,12 @@ void function::create(std::string str, Python3Parser::FuncdefContext *ctx) {
 }
 
 void func_print(std::vector<std::any> x) {
+  if(x.empty()) return;
+  std::cout << x[0];
   for(auto y: x) {
     // pair<std::string, std::any> \ 一个值
-    
+    std::cout << " " << y;
   }
+  std::cout << std::endl;
 }
 // 在全局新建五个内置函数

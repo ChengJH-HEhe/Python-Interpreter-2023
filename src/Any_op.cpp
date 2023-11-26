@@ -232,7 +232,7 @@ std::ostream& operator<<(std::ostream &os, std::any now){
   }else if(pd<double>(now)) {
     os << std::fixed << std::setprecision(6) << Cast<double>(now);
   }else if(pd<Bigint>(now)) {
-    os << Cast<std::any>(now);
+    os << Cast<Bigint>(now);
   }else if(pd<bool>(now)) {
     os << (Cast<bool>(now) ? "True" : "False");
   }else if(non(now)) os << "None";
