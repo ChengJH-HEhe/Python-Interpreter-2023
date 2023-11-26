@@ -1,0 +1,1 @@
+/usr/bin/g++  -Ofast CMakeFiles/code.dir/src/Any_op.cpp.o CMakeFiles/code.dir/src/Evalvisitor.cpp.o CMakeFiles/code.dir/src/funcvar.cpp.o CMakeFiles/code.dir/src/int2048.cpp.o CMakeFiles/code.dir/src/main.cpp.o -o code  generated/libPyAntlr.a -lantlr4-runtime 

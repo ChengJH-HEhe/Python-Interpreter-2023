@@ -2,11 +2,11 @@
 #include "Any_op.h"
 #include "funcvar.h"
 #include "mytype.h"
+#include <any>
 #include <cstdio>
 #include <map>
-#include <variant>
-#include <any>
 #include <utility>
+#include <variant>
 
 // implementation
 // TODO: override all methods of Python3ParserBaseVisitor
@@ -67,19 +67,19 @@ std::any EvalVisitor::visitStmt(Python3Parser::StmtContext *ctx) {
 
 std::any EvalVisitor::visitFlow_stmt(Python3Parser::Flow_stmtContext *ctx) {
   if (ctx->break_stmt())
-    return flow(FLOWSTMT::BREAK,{});
+    return flow(FLOWSTMT::BREAK, {});
   else if (ctx->continue_stmt())
-    return flow(FLOWSTMT::CONTINUE,{});
+    return flow(FLOWSTMT::CONTINUE, {});
   else if (ctx->return_stmt())
     return visitReturn_stmt(ctx->return_stmt());
   return {};
 }
 
 std::any EvalVisitor::visitReturn_stmt(Python3Parser::Return_stmtContext *ctx) {
-  if (ctx->testlist()) 
+  if (ctx->testlist())
     return flow(FLOWSTMT::RETURN, std::move(visitTestlist(ctx->testlist())));
   else
-    return flow(FLOWSTMT::RETURN,{});
+    return flow(FLOWSTMT::RETURN, {});
 }
 
 std::any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx) {
@@ -306,7 +306,8 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
         Cast<std::vector<std::any>>(visitTestlist(var[0]));
     std::vector<std::any> y =
         Cast<std::vector<std::any>>(visitTestlist(var[1]));
-    simply(y);
+    for (auto &z : y)
+      simply(z);
     int sz = std::min(x.size(), y.size());
     for (int i = 0; i < sz; ++i) {
       if (!pd<std::pair<std::string, int>>(x[i]))
@@ -315,8 +316,10 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
       scope.change(Cast<std::pair<std::string, int>>(x[i]), y[i], tp);
     }
   } else {
-    auto rhs = Cast<std::vector<std::any>>(std::move(visitTestlist(var.back())));
-    simply(rhs);
+    auto rhs =
+        Cast<std::vector<std::any>>(std::move(visitTestlist(var.back())));
+    for (auto &_rhs : rhs)
+      simply(_rhs);
     const int cd = var.size() - 1;
     for (int i = 0; i < cd; ++i) {
       auto lhs = Cast<std::vector<std::any>>(std::move(visitTestlist(var[i])));

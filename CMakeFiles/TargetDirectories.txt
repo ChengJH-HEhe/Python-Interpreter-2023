@@ -1,0 +1,6 @@
+/home/unix/Python-Interpreter-2023/CMakeFiles/code.dir
+/home/unix/Python-Interpreter-2023/CMakeFiles/edit_cache.dir
+/home/unix/Python-Interpreter-2023/CMakeFiles/rebuild_cache.dir
+/home/unix/Python-Interpreter-2023/generated/CMakeFiles/PyAntlr.dir
+/home/unix/Python-Interpreter-2023/generated/CMakeFiles/edit_cache.dir
+/home/unix/Python-Interpreter-2023/generated/CMakeFiles/rebuild_cache.dir
