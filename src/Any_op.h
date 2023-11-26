@@ -8,12 +8,7 @@
 
 using Bigint = sjtu::int2048;
 
-enum FLOWSTMT { BREAK, CONTINUE, RETURN };
-struct flow {
-  FLOWSTMT word;
-  std::any an;
-  flow(FLOWSTMT, std::any);
-};
+
 template <typename T> T &Cast(std::any &);
 
 // 判断类型
