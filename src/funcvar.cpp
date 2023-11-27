@@ -30,7 +30,9 @@ int Scope::find(std::string x) {
 
 funcptr Scope::find_func(std::string x) {
   if (mp[0].find(x) != mp[0].end()){
+    //std::cerr<<2333;
     auto tmp = Cast<funcptr>(mp[0][x]);
+    //std::cerr<<2333;
     return tmp;
   }
   else return nullptr;
@@ -94,11 +96,11 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   static std::unordered_map<funcptr, std::unordered_map<std::string, std::any>>
       Def;
   static std::unordered_map<funcptr, std::vector<std::string>> varName;
-  //funcptr x = Cast<funcptr>(scope.mp[0][str]);
   auto x = scope.find_func(str);
   scope.mp.push_back(Def[x]);
   std::vector<std::string> vec = varName[x]; // 每个参数名称
   if (Arg) {
+    //std::cerr<<"Arg";
     auto arglist = Arg->argument();
     static int szArg = arglist.size(),
                szFunc = vec.size(); // sz 为 调用时 的 长度
@@ -121,13 +123,11 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
       }
     }
   }
-
   auto &&tmp = eva.visit(x->suite());
-  
+
     // 先化简后清空
   std::any retVal;
   if (pd<flow>(tmp)) {
-    std::cerr<<2333;
     std::any finalResult = Cast<flow>(tmp).an;
     if (non(finalResult))
       retVal = {};
