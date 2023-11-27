@@ -3,7 +3,6 @@
 #define funcvar_h
 
 #include "Evalvisitor.h"
-
 using funcptr = Python3Parser::FuncdefContext*;
 // vector<Data> (*forEachMethod) (const LinkedHashMap&);
 // 函数指针的写法 和声明一样，只是*后面就是函数指针名，参数列表
@@ -17,6 +16,7 @@ struct Scope {
   void change(std::pair<std::string, int>, std::any, char);
   std::any getval(std::pair<std::string, int>);
 };
+extern Scope scope;
 
 struct function {
   std::string NAME;

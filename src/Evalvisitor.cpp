@@ -32,11 +32,9 @@ std::any EvalVisitor::visitTfpdef(Python3Parser::TfpdefContext *ctx) {
 // TODO
 std::any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx) {
   std::string name = ctx->NAME()->getText();
-  std::cerr<<name;
   f.create(name, ctx);
   // evalvisitor 遍历树的函数指针
   // ctx 存树上节点的子信息
-  std::cerr<<name;
   return {};
 }
 
@@ -58,8 +56,9 @@ EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
 std::any EvalVisitor::visitSmall_stmt(Python3Parser::Small_stmtContext *ctx) {
   if (ctx->expr_stmt()) {
     return visitExpr_stmt(ctx->expr_stmt());
-  } else
+  } else if(ctx->flow_stmt())
     return visitFlow_stmt(ctx->flow_stmt());
+  else return {};
 }
 std::any EvalVisitor::visitSimple_stmt(Python3Parser::Simple_stmtContext *ctx) {
   return visitSmall_stmt(ctx->small_stmt());
@@ -134,6 +133,7 @@ std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
 }
 
 std::any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx) {
+  if(!ctx)return {};
   if (ctx->simple_stmt()) {
     auto &&tmp = visitSimple_stmt(ctx->simple_stmt());
     if (pd<flow>(tmp))
@@ -152,6 +152,7 @@ std::any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx) {
 }
 
 std::any EvalVisitor::visitTest(Python3Parser::TestContext *ctx) {
+
   return visitOr_test(ctx->or_test());
   // ctx->or_test()->and_test()->assign();
 }
@@ -293,6 +294,7 @@ std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
 std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
   if (!ctx->ASSIGN(0) && !ctx->augassign())
     return visitChildren(ctx);
+  //std::cerr<<"Expr_stmt"<<std::endl;
   auto var = ctx->testlist();
   char tp = '=';
   if (ctx->augassign()) {
@@ -352,14 +354,18 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
 // TODO/ done
 std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
   auto &&v = visitAtom(ctx->atom());
-  // std::cerr<<"atom_expr"<<" "<< v<<std::endl;
   if (ctx->trailer()) {
     auto arglist = ctx->trailer()->arglist();
-    if(!arglist) 
+    std::string tmp;
+    if(pd<std::pair<std::string, int>>(v))
+      tmp = Cast<std::pair<std::string, int>>(v).first;
+    //std::cerr<<"atom_expr"<<" "<<tmp<<std::endl;
+    if(!arglist && (tmp == "print" || tmp == "int" || tmp == "bool" || tmp == "float" || tmp == "str")){
       return {};
-    auto argument = arglist->argument();
+    }
+    std::vector<Python3Parser::ArgumentContext *> argument;
+    if(arglist) argument = arglist->argument();
     // 变量返回pair<std::string,int>
-    auto tmp = Cast<std::string>(v);
     if (tmp == "print") {
       for (int i = 0; i < int(argument.size()) - 1; ++i) {
         // pair<std::string, std::any> \ 一个值
@@ -382,8 +388,12 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
         return toFloat(realArgument[0]);
       else if (tmp == "str")
         return toStr(realArgument[0]);
-      else
-        return f.func(ctx->getText(), arglist);
+      else {
+        auto tmp1 = f.func(tmp, arglist);
+        if(non(tmp1))std::cerr<<"gotit";
+        //f.func(std::string, Python3Parser::ArglistContext *)
+        return tmp1;
+      }
       //std::cerr<<ctx->getText();
     }
   } else
@@ -436,7 +446,7 @@ std::any EvalVisitor::visitTestlist(Python3Parser::TestlistContext *ctx) {
   // visitTest -> visitAtom 给出 新变量name ， 允许name = val
   auto x = ctx->test();
   if (x.empty())
-    return x;
+    return std::vector<std::any>();
   else {
     std::vector<std::any> a;
     for (int i = 0; i < x.size(); ++i) {

@@ -15,7 +15,7 @@ extern Scope scope;
 EvalVisitor eva; // 存一个函数指针
 void Scope::init() {
   std::unordered_map<std::string, std::any> nw;
-  mp.push_back(nw);
+  mp.push_back(std::move(nw));
 }
 int Scope::find(std::string x) {
   // 插入操作
@@ -29,12 +29,11 @@ int Scope::find(std::string x) {
 }
 
 funcptr Scope::find_func(std::string x) {
-  if (mp.back().find(x) != mp.back().end())
-    return Cast<funcptr>(mp.back()[x]); // std::cerr<<233,
-  else if (mp[0].find(x) != mp[0].end())
-    return Cast<funcptr>(mp[0][x]);
-  else
-    return nullptr;
+  if (mp[0].find(x) != mp[0].end()){
+    auto tmp = Cast<funcptr>(mp[0][x]);
+    return tmp;
+  }
+  else return nullptr;
 }
 void Scope::change(std::pair<std::string, int> a, std::any b, char c) {
   int pos = a.second;
@@ -59,8 +58,9 @@ std::any Scope::getval(std::pair<std::string, int> a) {
 
 // 放克！
 void function::create(std::string str, funcptr ctx) {
-  scope.mp.back()[str] = std::make_shared<funcptr>(ctx);
   // arglist
+  scope.mp[0][str] = ctx;
+  auto x = scope.find_func(str);
   auto list = ctx->parameters()->typedargslist();
   // 特判
   std::vector<std::string> v;
@@ -89,17 +89,14 @@ void function::create(std::string str, funcptr ctx) {
   varName[ctx] = v;
 }
 
-std::any function::func(std::string str, Python3Parser::ArglistContext *Arg) {
+std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   // 新建变量空间，初始化函数定义
   static std::unordered_map<funcptr, std::unordered_map<std::string, std::any>>
       Def;
   static std::unordered_map<funcptr, std::vector<std::string>> varName;
+  //funcptr x = Cast<funcptr>(scope.mp[0][str]);
   auto x = scope.find_func(str);
   scope.mp.push_back(Def[x]);
-  // 调用，修改参数列表
-  //      a
-  //  1 2 3
-  // target: vec
   std::vector<std::string> vec = varName[x]; // 每个参数名称
   if (Arg) {
     auto arglist = Arg->argument();
@@ -124,11 +121,13 @@ std::any function::func(std::string str, Python3Parser::ArglistContext *Arg) {
       }
     }
   }
-  auto y = x->suite();
-  auto tmp = eva.visit(y);
-  // 先化简后清空
+
+  auto &&tmp = eva.visit(x->suite());
+  
+    // 先化简后清空
   std::any retVal;
   if (pd<flow>(tmp)) {
+    std::cerr<<2333;
     std::any finalResult = Cast<flow>(tmp).an;
     if (non(finalResult))
       retVal = {};

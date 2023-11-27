@@ -1,2 +1,4 @@
-two = 0 + 1 * 2
-print(two)
+#Function Test
+def foo():
+    return
+foo()
