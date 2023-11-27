@@ -97,6 +97,7 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
       Def;
   static std::unordered_map<funcptr, std::vector<std::string>> varName;
   auto x = scope.find_func(str);
+  //std::cerr<<Arg->depth()<<" ";
   scope.mp.push_back(Def[x]);
   std::vector<std::string> vec = varName[x]; // 每个参数名称
   if (Arg) {
