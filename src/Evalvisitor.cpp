@@ -141,8 +141,8 @@ std::any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx) {
       return {};
     for (int i = 0; i < tmp.size(); ++i) {
       auto &&temp = visitStmt(tmp[i]);
-      if (pd<flow>(tmp))
-        return tmp;
+      if (pd<flow>(temp))
+        return temp;
     }
   }
   return {};
@@ -329,12 +329,12 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
     //std::cerr<<233;
     // std::cerr<<"rhs"<<_rhs;
 
-    const int cd = var.size() - 1;
+    static int cd = var.size() - 1;
 
     // std::cerr<<"Expr_stmt"<<" "<<cd<<std::endl;
     for (int i = 0; i < cd; ++i) {
       auto lhs = Cast<std::vector<std::any>>(visitTestlist(var[i]));
-      const int range = std::min(lhs.size(), rhs.size());
+      static int range = std::min(lhs.size(), rhs.size());
       for (int j = 0; j < range; ++j) {
         if (!pd<std::pair<std::string, int>>(lhs[j]))
           continue;
@@ -379,7 +379,7 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
       func_print(realArgument);
       return {};
     } else
-      return f.func(ctx->getText(), realArgument);
+      return f.func(ctx->getText(), arglist);
   } else
     return v;
 }

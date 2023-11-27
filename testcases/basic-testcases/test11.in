@@ -1,5 +1,5 @@
 #Function Test
-def foo(a):
+def foo(b,c=2,a=3):
     print(a)
 i = 0
 while i < 10:

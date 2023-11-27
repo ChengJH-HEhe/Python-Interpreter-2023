@@ -3,12 +3,8 @@
 #define funcvar_h
 
 #include "Evalvisitor.h"
-#include <any>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
+using funcptr = Python3Parser::FuncdefContext*;
 // vector<Data> (*forEachMethod) (const LinkedHashMap&);
 // 函数指针的写法 和声明一样，只是*后面就是函数指针名，参数列表
 
@@ -16,16 +12,16 @@
 struct Scope {
   std::vector<std::unordered_map<std::string, std::any>> mp;
   int find(std::string);
-  std::shared_ptr<Python3Parser::FuncdefContext> find_func(std::string);
+  funcptr find_func(std::string);
   void init();
-  void change(std::pair<std::string, int>, std::any &, char);
+  void change(std::pair<std::string, int>, std::any, char);
   std::any getval(std::pair<std::string, int>);
 };
 
 struct function {
   std::string NAME;
-  std::any func(std::string, std::vector<std::any>);
-  void create(std::string, Python3Parser::FuncdefContext *);
+  std::any func(std::string, Python3Parser::ArglistContext*);
+  void create(std::string, funcptr);
 };
 void func_print(std::vector<std::any>);
 #endif

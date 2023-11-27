@@ -1,8 +1,10 @@
 #include "funcvar.h"
 #include "Any_op.h"
 #include "Evalvisitor.h"
+#include "mytype.h"
 #include <memory>
 #include <unordered_map>
+#include <vector>
 extern Scope scope;
 
 // 没有必要，新建函数空间与新建变量空间是同步的
@@ -25,8 +27,8 @@ int Scope::find(std::string x) {
     return mp.back()[x] = {}, int(mp.size()) - 1;
   // iterator?
 }
-using funcptr = std::shared_ptr<Python3Parser::FuncdefContext>;
-funcptr Scope::find_func(std::string x){
+
+funcptr Scope::find_func(std::string x) {
   if (mp.back().find(x) != mp.back().end())
     return Cast<funcptr>(mp.back()[x]); // std::cerr<<233,
   else if (mp[0].find(x) != mp[0].end())
@@ -34,7 +36,7 @@ funcptr Scope::find_func(std::string x){
   else
     return nullptr;
 }
-void Scope::change(std::pair<std::string, int> a, std::any &b, char c) {
+void Scope::change(std::pair<std::string, int> a, std::any b, char c) {
   int pos = a.second;
   if (c == '=')
     mp[pos][a.first] = b;
@@ -56,15 +58,92 @@ std::any Scope::getval(std::pair<std::string, int> a) {
 }
 
 // 放克！
-void function::create(std::string str, Python3Parser::FuncdefContext *ctx) {
-  scope.mp.back()[str] = std::make_shared<Python3Parser::FuncdefContext>(ctx);
+void function::create(std::string str, funcptr ctx) {
+  scope.mp.back()[str] = std::make_shared<funcptr>(ctx);
+  // arglist
+  auto list = ctx->parameters()->typedargslist();
+  // 特判
+  std::vector<std::string> v;
+  std::unordered_map<std::string, std::any> mpFunc;
+  static std::unordered_map<funcptr, std::unordered_map<std::string, std::any>>
+      Def;
+  static std::unordered_map<funcptr, std::vector<std::string>> varName;
+  if (list) {
+    auto All = list->tfpdef();   // 未设初值
+    auto Default = list->test(); // 已设初值
+    static int n = All.size(), m = Default.size();
+    // 为变量申请空间
+    for (int i = 0; i < n - m; ++i) {
+      v.push_back(All[i]->getText());
+      mpFunc[All[i]->getText()] = {};
+    }
+    for (int i = 0; i < m; ++i) {
+      auto val = eva.visit(Default[i]);
+      simply(val);
+      mpFunc[All[i + n - m]->getText()] = val;
+      v.push_back(All[i + n - m]->getText());
+    }
+    // ctx mpFUNC
+  }
+  Def[ctx] = mpFunc;
+  varName[ctx] = v;
 }
 
-std::any function::func(std::string a, std::vector<std::any> b) {
-  std::vector<std::any> res;
-  auto x = scope.find_func(a);
+std::any function::func(std::string str, Python3Parser::ArglistContext *Arg) {
+  // 新建变量空间，初始化函数定义
+  static std::unordered_map<funcptr, std::unordered_map<std::string, std::any>>
+      Def;
+  static std::unordered_map<funcptr, std::vector<std::string>> varName;
+  auto x = scope.find_func(str);
+  scope.mp.push_back(Def[x]);
+  // 调用，修改参数列表
+  //      a
+  //  1 2 3
+  // target: vec
+  std::vector<std::string> vec = varName[x]; // 每个参数名称
+  if (Arg) {
+    auto arglist = Arg->argument();
+    static int szArg = arglist.size(),
+               szFunc = vec.size(); // sz 为 调用时 的 长度
+    for (int i = 0; i < szArg; ++i) {
+      // vec[i] = arglist[i]
+      int pos = scope.find(vec[i]);
+      auto node = arglist[i]->test();
+      auto node0 = eva.visit(node[0]);
+      if (node.size() == 1) {
+        simply(node0);
+        scope.change(make_pair(vec[i], pos), node0, '=');
+      } else {
+        // name  pair<string,int> 右getval
+        auto newval = eva.visit(node[1]);
+        simply(newval);
+        std::pair<std::string, int> lvalue =
+            Cast<std::pair<std::string, int>>(node0);
+        lvalue.second = scope.find(lvalue.first);
+        scope.change(lvalue, newval, '=');
+      }
+    }
+  }
   auto y = x->suite();
-  return res;
+  auto tmp = eva.visit(y);
+  // 先化简后清空
+  std::any retVal;
+  if (pd<flow>(tmp)) {
+    std::any finalResult = Cast<flow>(tmp).an;
+    if (non(finalResult))
+      retVal = {};
+    else if (pd<std::pair<std::string, int>>(finalResult)) {
+      // 变量
+      std::string s = Cast<std::pair<std::string, int>>(finalResult).first;
+      return scope.mp[scope.find(s)][s];
+    } else // if(pd<std::vector<std::any>>(finalResult.an))
+      return finalResult;
+  } else
+    retVal = {};
+  scope.mp.back().clear();
+  scope.mp.pop_back();
+  // 化简结果
+  return retVal;
 }
 
 void func_print(std::vector<std::any> x) {
