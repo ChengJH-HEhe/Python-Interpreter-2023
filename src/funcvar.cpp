@@ -64,36 +64,32 @@ void function::create(std::string str, funcptr ctx) {
   //    3
   //a b c
   scope.mp[0][str] = ctx;
-  auto list = ctx->parameters()->typedargslist();
-  // 特判
-  std::vector<std::string> v;
-  std::unordered_map<std::string, std::any> mpFunc;
-  if (list) {
-    auto All = list->tfpdef();   // 未设初值
-    auto Default = list->test(); // 已设初值
-    static int n = All.size(), m = Default.size();
-    // 为变量申请空间
-    for (int i = 0; i < n - m; ++i) {
-      v.push_back(All[i]->NAME()->getText());
-      mpFunc[All[i]->NAME()->getText()] = {};
-    }
-    for (int i = 0; i < m; ++i) {
-      auto val = eva.visit(Default[i]);
-      //std::cerr<<All[i+n-m]->getText()<<" "<<val<<std::endl;
-      mpFunc[All[i + n - m]->getText()] = val;
-      v.push_back(All[i + n - m]->NAME()->getText());
-    }
-    // ctx mpFUNC
-  }
-  Def[ctx] = std::move(mpFunc);
-  varName[ctx] = std::move(v);
 }
 
 std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   // 新建变量空间，初始化函数定义
-  auto x = scope.find_func(str);
-  scope.mp.push_back(Def[x]);
-  std::vector<std::string> vec = varName[x]; // 每个参数名称
+  auto ctx = scope.find_func(str);
+  auto list = ctx->parameters()->typedargslist();
+  std::vector<std::string> v;// all the variable names
+  std::unordered_map<std::string, std::any> mpFunc;// corresponding values r
+  if (list) {
+    auto All = list->tfpdef();   // 未设初值
+    auto Default = list->test(); // 已设初值
+    static int n = All.size(), m = Default.size();
+    //为变量申请空间
+    for (int i = 0; i < n - m; ++i) {
+      v.push_back(All[i]->getText());
+      mpFunc[v.back()] = {};
+    }
+    for (int i = 0; i < m; ++i) {
+      auto val = eva.visit(Default[i]);
+      //mpFunc[All[i + n - m]->getText()] = val;
+      v.push_back(All[i + n - m]->NAME()->getText());
+    }
+    // ctx mpFUNC
+  }
+  scope.mp.push_back(Def[ctx]);
+  std::vector<std::string> vec = varName[ctx]; // 每个参数名称
   //std::cerr<<Def.size();
   if (Arg) {
     auto argument = Arg->argument();
@@ -115,7 +111,7 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
       }
     }
   }
-  auto &&tmp = eva.visit(x->suite());
+  auto &&tmp = eva.visit(ctx->suite());
 
     // 先化简后清空
   std::any retVal;
