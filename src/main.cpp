@@ -1,5 +1,5 @@
-#include "../generated/Python3Parser.h"
-#include "../generated/Python3Lexer.h"
+#include "Python3Parser.h"
+#include "Python3Lexer.h"
 
 #include "Evalvisitor.h"
 #include "antlr4-runtime.h"
@@ -9,6 +9,7 @@ using namespace antlr4;
 //       if you really need to regenerate,please ask TA for help.
 int main(int argc, const char *argv[]) {
 	// TODO: please don't modify the code below the construction of ifs if you want to use visitor mode
+	freopen("input.txt","r",stdin);
 	ANTLRInputStream input(std::cin);
 	Python3Lexer lexer(&input);
 	CommonTokenStream tokens(&lexer);

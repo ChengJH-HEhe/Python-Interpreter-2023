@@ -32,13 +32,16 @@ std::any EvalVisitor::visitTfpdef(Python3Parser::TfpdefContext *ctx) {
 // TODO
 std::any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx) {
   std::string name = ctx->NAME()->getText();
+  std::cerr<<name;
   f.create(name, ctx);
   // evalvisitor 遍历树的函数指针
   // ctx 存树上节点的子信息
+  std::cerr<<name;
   return {};
 }
 
-std::any EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
+std::any
+EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
   if (ctx->if_stmt()) {
     auto &&v = visitIf_stmt(ctx->if_stmt());
     if (pd<flow>(v))
@@ -234,7 +237,7 @@ std::any EvalVisitor::visitArith_expr(Python3Parser::Arith_exprContext *ctx) {
     return tmp;
   simply(tmp);
   auto z = ctx->addorsub_op();
-  for (int i = 1; i < y.size() ; ++i) {
+  for (int i = 1; i < y.size(); ++i) {
     auto &&temp = visitTerm(y[i]);
     simply(temp);
     if (z[i - 1]->ADD())
@@ -248,7 +251,8 @@ std::any EvalVisitor::visitArith_expr(Python3Parser::Arith_exprContext *ctx) {
 std::any EvalVisitor::visitTerm(Python3Parser::TermContext *ctx) {
   // factor (muldivmod_op factor)
   auto y = ctx->factor();
-  if(y.empty())return {};
+  if (y.empty())
+    return {};
   auto &&res = visitFactor(y[0]);
   auto z = ctx->muldivmod_op();
   if (y.size() <= 1)
@@ -272,10 +276,6 @@ std::any EvalVisitor::visitTerm(Python3Parser::TermContext *ctx) {
 
 std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
   //'+' '-'
-  // auto y = ctx->factor();
-  // auto z = ctx->atom_expr();
-  // auto t = ctx->ADD();
-  // auto tt = ctx->MINUS();
   if (ctx->factor()) {
     auto &&rvalue = visitFactor(ctx->factor());
     simply(rvalue);
@@ -326,8 +326,8 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
     auto rhs = Cast<std::vector<std::any>>(visitTestlist(var.back()));
     for (auto &_rhs : rhs)
       simply(_rhs);
-    //std::cerr<<233;
-    // std::cerr<<"rhs"<<_rhs;
+    // std::cerr<<233;
+    //  std::cerr<<"rhs"<<_rhs;
 
     static int cd = var.size() - 1;
 
@@ -338,7 +338,8 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
       for (int j = 0; j < range; ++j) {
         if (!pd<std::pair<std::string, int>>(lhs[j]))
           continue;
-         //std::cerr<<Cast<std::pair<std::string, int>>(lhs[j]).first << " "<< j<<std::endl;
+        // std::cerr<<Cast<std::pair<std::string, int>>(lhs[j]).first << " "<<
+        // j<<std::endl;
         // <<std::endl;
         scope.change(Cast<std::pair<std::string, int>>(lhs[i]), rhs[j], '=');
       }
@@ -354,32 +355,37 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
   // std::cerr<<"atom_expr"<<" "<< v<<std::endl;
   if (ctx->trailer()) {
     auto arglist = ctx->trailer()->arglist();
-    auto argument = arglist->argument();
-
-    // 前后差值为第一个的数目
-    // 第二种返回的是pair<std::string,int>
-    // 函数名 ctx->getText() 函数参数 tmp2
-    // call(*ctx,tmp2);
-    std::vector<std::any> realArgument;
-    for (auto i : argument)
-      realArgument.emplace_back(visitArgument(i));
-    // std::cerr << "Atom_expr" << realArgument.back() << " ";
-    //  Specifically builtin_func tpdir
-    auto tmp = Cast<std::string>(v);
-    int tp = 0;
-    if (tmp == "int")
-      return toInt(realArgument[0]);
-    else if (tmp == "bool")
-      return toBool(realArgument[0]);
-    else if (tmp == "float")
-      return toFloat(realArgument[0]);
-    else if (tmp == "str")
-      return toStr(realArgument[0]);
-    else if (tmp == "print") {
-      func_print(realArgument);
+    if(!arglist) 
       return {};
-    } else
-      return f.func(ctx->getText(), arglist);
+    auto argument = arglist->argument();
+    // 变量返回pair<std::string,int>
+    auto tmp = Cast<std::string>(v);
+    if (tmp == "print") {
+      for (int i = 0; i < int(argument.size()) - 1; ++i) {
+        // pair<std::string, std::any> \ 一个值
+        std::cout << visitArgument(argument[i]) << " ";
+      }
+      std::cout << visitArgument(argument.back()) << std::endl;
+      return {};
+    } else {
+      std::vector<std::any> realArgument;
+      for (auto i : argument)
+        realArgument.emplace_back(visitArgument(i));
+      // std::cerr << "Atom_expr" << realArgument.back() << " ";
+      //  Specifically builtin_func tpdir
+      int tp = 0;
+      if (tmp == "int")
+        return toInt(realArgument[0]);
+      else if (tmp == "bool")
+        return toBool(realArgument[0]);
+      else if (tmp == "float")
+        return toFloat(realArgument[0]);
+      else if (tmp == "str")
+        return toStr(realArgument[0]);
+      else
+        return f.func(ctx->getText(), arglist);
+      //std::cerr<<ctx->getText();
+    }
   } else
     return v;
 }
@@ -418,6 +424,7 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
     for (auto y : x) {
       std::string tmp = y->getText();
       int sz = tmp.size();
+      //std::cerr<<sz<<std::endl;
       s += tmp.substr(1, sz - 2);
     }
     // std::cerr<<"atom_expr"<<" "<< s<<std::endl;
@@ -450,7 +457,7 @@ std::any EvalVisitor::visitArgument(Python3Parser::ArgumentContext *ctx) {
   } else {
     // 返回一个值 已知变量需要解析为值
     auto &&var = visitTest(ctx->test(0));
-    //std::cerr << "Argument" << var << std::endl;
+    // std::cerr << "Argument" << var << std::endl;
     if (pd<std::pair<std::string, int>>(var))
       return scope.getval(Cast<std::pair<std::string, int>>(var));
     else
