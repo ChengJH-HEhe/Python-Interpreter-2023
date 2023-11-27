@@ -387,18 +387,7 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
     std::vector<Python3Parser::ArgumentContext *> argument;
     if(arglist) argument = arglist->argument();
     // 变量返回pair<std::string,int>
-    if (tmp == "print") {
-      for (int i = 0; i < int(argument.size()) - 1; ++i) {
-        // pair<std::string, std::any> \ 一个值
-        auto tempres =  visitArgument(argument[i]);
-        simply(tempres);
-        std::cout << tempres << " ";
-      }
-      auto tempres =  visitArgument(argument.back());
-      simply(tempres);
-      std::cout << tempres << std::endl;
-      return {};
-    } else {
+    
       std::vector<std::any> realArgument;
       for (auto i : argument)
         realArgument.emplace_back(visitArgument(i));
@@ -413,14 +402,15 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
         return toFloat(realArgument[0]);
       else if (tmp == "str")
         return toStr(realArgument[0]);
-      else {
+      else if(tmp == "print") {
+        func_print(realArgument);
+        return {};
+      }else {
         auto tmp1 = f.func(tmp, arglist);
-        if(non(tmp1))std::cerr<<"gotit";
         //f.func(std::string, Python3Parser::ArglistContext *)
         return tmp1;
       }
       //std::cerr<<ctx->getText();
-    }
   } else
     return v;
 }

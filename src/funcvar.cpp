@@ -123,6 +123,10 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
         scope.change(lvalue, newval, '=');
       }
     }
+    for(int i = szArg; i < szFunc; ++i) {
+      int pos = scope.find(vec[i]);
+      scope.change(make_pair(vec[i], scope.mp.size()-1),scope.mp[pos][vec[i]],'=');
+    }
   }
   auto &&tmp = eva.visit(x->suite());
 
@@ -130,7 +134,7 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   std::any retVal;
   if (pd<flow>(tmp)) {
     std::any finalResult = Cast<flow>(tmp).an;
-    if (non(finalResult))
+    if (non(finalResult)||(pd<std::vector<std::any>>(finalResult)&&(Cast<std::vector<std::any>>(finalResult).empty())))
       retVal = {};
     else if (pd<std::pair<std::string, int>>(finalResult)) {
       // 变量
