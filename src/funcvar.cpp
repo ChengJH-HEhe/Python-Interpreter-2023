@@ -79,6 +79,7 @@ void function::create(std::string str, funcptr ctx) {
     }
     for (int i = 0; i < m; ++i) {
       auto val = eva.visit(Default[i]);
+      //std::cerr<<All[i+n-m]->getText()<<" "<<val<<std::endl;
       mpFunc[All[i + n - m]->getText()] = val;
       v.push_back(All[i + n - m]->NAME()->getText());
     }
@@ -92,9 +93,8 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   // 新建变量空间，初始化函数定义
   auto x = scope.find_func(str);
   scope.mp.push_back(Def[x]);
-  //std::cerr<<"233";
   std::vector<std::string> vec = varName[x]; // 每个参数名称
-  //std::cerr<<vec.size();
+  //std::cerr<<Def.size();
   if (Arg) {
     auto argument = Arg->argument();
     // a = 5 或 std::any
@@ -103,13 +103,16 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
     static int szArg = argument.size(), // 已经给的值
                szFunc = vec.size();     // sz 为调用时的总长度
     int nowpos = scope.mp.size() - 1;
-
+    
     for (int i = 0; i < szArg; ++i) {
       auto &&res = eva.visit(argument[i]);
-      scope.change(make_pair(vec[i], nowpos), res, '=');
-    }
-    for(int i = szArg; i < szFunc; ++i) {
-      scope.change(make_pair(vec[i], nowpos),scope.mp[0][vec[i]],'=');
+      if(pd<std::pair<std::string, std::any>>(res)) {
+        auto pr = Cast<std::pair<std::string, std::any>>(res);
+        //std::cerr<<pr.first<<" "<<pr.second<<std::endl;
+        scope.change(make_pair(pr.first, nowpos), pr.second, '=');
+      } else {
+        scope.change(make_pair(vec[i], nowpos), res, '=');
+      }
     }
   }
   auto &&tmp = eva.visit(x->suite());
