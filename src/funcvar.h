@@ -20,6 +20,8 @@ extern Scope scope;
 
 struct function {
   std::string NAME;
+  std::unordered_map<funcptr, std::unordered_map<std::string, std::any>> Def;
+  std::unordered_map<funcptr, std::vector<std::string>> varName;
   std::any func(std::string, Python3Parser::ArglistContext*);
   void create(std::string, funcptr);
 };

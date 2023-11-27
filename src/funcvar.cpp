@@ -61,71 +61,55 @@ std::any Scope::getval(std::pair<std::string, int> a) {
 // 放克！
 void function::create(std::string str, funcptr ctx) {
   // arglist
+  //    3
+  //a b c
   scope.mp[0][str] = ctx;
-  auto x = scope.find_func(str);
   auto list = ctx->parameters()->typedargslist();
   // 特判
   std::vector<std::string> v;
   std::unordered_map<std::string, std::any> mpFunc;
-  static std::unordered_map<funcptr, std::unordered_map<std::string, std::any>>
-      Def;
-  static std::unordered_map<funcptr, std::vector<std::string>> varName;
   if (list) {
     auto All = list->tfpdef();   // 未设初值
     auto Default = list->test(); // 已设初值
     static int n = All.size(), m = Default.size();
     // 为变量申请空间
     for (int i = 0; i < n - m; ++i) {
-      v.push_back(All[i]->getText());
-      mpFunc[All[i]->getText()] = {};
+      v.push_back(All[i]->NAME()->getText());
+      mpFunc[All[i]->NAME()->getText()] = {};
     }
     for (int i = 0; i < m; ++i) {
       auto val = eva.visit(Default[i]);
-      simply(val);
       mpFunc[All[i + n - m]->getText()] = val;
-      v.push_back(All[i + n - m]->getText());
+      v.push_back(All[i + n - m]->NAME()->getText());
     }
     // ctx mpFUNC
   }
-  Def[ctx] = mpFunc;
-  varName[ctx] = v;
+  Def[ctx] = std::move(mpFunc);
+  varName[ctx] = std::move(v);
 }
 
 std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   // 新建变量空间，初始化函数定义
-  static std::unordered_map<funcptr, std::unordered_map<std::string, std::any>>
-      Def;
-  static std::unordered_map<funcptr, std::vector<std::string>> varName;
   auto x = scope.find_func(str);
-  //std::cerr<<Arg->depth()<<" ";
   scope.mp.push_back(Def[x]);
+  //std::cerr<<"233";
   std::vector<std::string> vec = varName[x]; // 每个参数名称
+  //std::cerr<<vec.size();
   if (Arg) {
-    //std::cerr<<"Arg";
-    auto arglist = Arg->argument();
-    static int szArg = arglist.size(),
-               szFunc = vec.size(); // sz 为 调用时 的 长度
+    auto argument = Arg->argument();
+    // a = 5 或 std::any
+    // 1,1,4,5,1,4, arg , 5
+    //                    b
+    static int szArg = argument.size(), // 已经给的值
+               szFunc = vec.size();     // sz 为调用时的总长度
+    int nowpos = scope.mp.size() - 1;
+
     for (int i = 0; i < szArg; ++i) {
-      // vec[i] = arglist[i]
-      int pos = scope.find(vec[i]);
-      auto node = arglist[i]->test();
-      auto node0 = eva.visit(node[0]);
-      if (node.size() == 1) {
-        simply(node0);
-        scope.change(make_pair(vec[i], pos), node0, '=');
-      } else {
-        // name  pair<string,int> 右getval
-        auto newval = eva.visit(node[1]);
-        simply(newval);
-        std::pair<std::string, int> lvalue =
-            Cast<std::pair<std::string, int>>(node0);
-        lvalue.second = scope.find(lvalue.first);
-        scope.change(lvalue, newval, '=');
-      }
+      auto &&res = eva.visit(argument[i]);
+      scope.change(make_pair(vec[i], nowpos), res, '=');
     }
     for(int i = szArg; i < szFunc; ++i) {
-      int pos = scope.find(vec[i]);
-      scope.change(make_pair(vec[i], scope.mp.size()-1),scope.mp[pos][vec[i]],'=');
+      scope.change(make_pair(vec[i], nowpos),scope.mp[0][vec[i]],'=');
     }
   }
   auto &&tmp = eva.visit(x->suite());
@@ -134,14 +118,15 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   std::any retVal;
   if (pd<flow>(tmp)) {
     std::any finalResult = Cast<flow>(tmp).an;
-    if (non(finalResult)||(pd<std::vector<std::any>>(finalResult)&&(Cast<std::vector<std::any>>(finalResult).empty())))
+    if (non(finalResult)||(pd<std::vector<std::any>>(finalResult)
+      &&(Cast<std::vector<std::any>>(finalResult).empty())))
       retVal = {};
     else if (pd<std::pair<std::string, int>>(finalResult)) {
       // 变量
       std::string s = Cast<std::pair<std::string, int>>(finalResult).first;
-      return scope.mp[scope.find(s)][s];
+      retVal = scope.mp[scope.find(s)][s];
     } else // if(pd<std::vector<std::any>>(finalResult.an))
-      return finalResult;
+      retVal = finalResult;
   } else
     retVal = {};
   scope.mp.back().clear();

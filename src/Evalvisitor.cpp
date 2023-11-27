@@ -431,7 +431,7 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
     if (x == "int" || x == "bool" || x == "float" || x == "str" ||
         x == "print") {
       return x;
-    } else { // std::cerr<<x<<" "<<scope.find(x)<<" ";
+    } else {
       return make_pair(x, scope.find(x));
     }
   } else if (ctx->NUMBER()) {
@@ -452,7 +452,6 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
       //std::cerr<<sz<<std::endl;
       s += tmp.substr(1, sz - 2);
     }
-    // std::cerr<<"atom_expr"<<" "<< s<<std::endl;
     return std::move(s);
   }
 }
