@@ -67,51 +67,71 @@ void function::create(std::string str, funcptr ctx) {
 }
 int cnt;
 
-std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
+// func 调用出现问题
+// 单参数赋值 done
+// 函数套函数 值与test?
+/*
+miller rabin 传参出错
+定义： miller_rabin(x,n)
+list = 2
+ALL x, n
+default 空
+调用： miller_rabin(i,x)
+Arg i = 2 
+default x = 2
+*/
+std::any function::func(std::string str,  std::vector<Python3Parser::ArgumentContext *> argument) {
   // 新建变量空间，初始化函数定义
   auto ctx = scope.find_func(str);
   auto list = ctx->parameters()->typedargslist();
+
   std::vector<std::string> vec;// all the variable names
+  std::vector<std::any> realArgument;
+
+  //把初值先算出来。
+  if(argument.size()) {
+    // a = 5 或 std::any
+    // 1,1,4,5,1,4, arg , 5
+    //                    b
+    int szArg = argument.size(); 
+    for(int i = 0; i < szArg; ++i)
+      realArgument.push_back(eva.visit(argument[i]));
+  }
   std::unordered_map<std::string, std::any> mpFunc;// corresponding values r
-  scope.mp.push_back(mpFunc);
+  scope.mp.push_back(std::move(mpFunc));
   if (list) {
     auto All = list->tfpdef();   // 未设初值
-    auto Default = list->test(); // 已设初值
-    static int n = All.size(), m = Default.size();
+    auto Default = list->test(); // 已设初值 arith_expr
+    int n = All.size(), m = Default.size();
     //为变量申请空间
     for (int i = 0; i < n - m; ++i) {
       vec.push_back(All[i]->getText());
       scope.mp.back()[vec.back()] = {};
     }
     for (int i = 0; i < m; ++i) {
-      auto val = eva.visit(Default[i]);
       vec.push_back(All[i + n - m]->NAME()->getText());
-      scope.mp.back()[vec.back()] = val;
+      scope.mp.back()[vec.back()] = eva.visit(Default[i]);
     }
     // ctx mpFUNC
   }
-  //std::cerr<<Def.size();
-  if (Arg) {
-    auto argument = Arg->argument();
-    // a = 5 或 std::any
-    // 1,1,4,5,1,4, arg , 5
-    //                    b
-    static int szArg = argument.size(), // 已经给的值
-               szFunc = vec.size();     // sz 为调用时的总长度
-    int nowpos = scope.mp.size() - 1;
-    
+  
+  if (argument.size()) {
+     // 已经给的值
+    int szFunc = vec.size(), szArg = realArgument.size();     // sz 为调用时的总长度
+    int nowpos = scope.mp.size() - 1;//目前层
     for (int i = 0; i < szArg; ++i) {
-      auto &&res = eva.visit(argument[i]);
+      auto &&res = realArgument[i];
       if(pd<std::pair<std::string, std::any>>(res)) {
         auto pr = Cast<std::pair<std::string, std::any>>(res);
-        //std::cerr<<pr.first<<" "<<pr.second<<std::endl;
-        scope.change(make_pair(pr.first, nowpos), pr.second, '=');
+        scope.change(make_pair(pr.first, nowpos), pr.second, '=');// c = 5
       } else {
-        scope.change(make_pair(vec[i], nowpos), res, '=');
+        scope.change(make_pair(vec[i], nowpos), res, '='); // 1
       }
     }
   }
+
   auto &&tmp = eva.visit(ctx->suite());
+  //std::cout<<Cast<flow>(tmp).an;
     // 先化简后清空
   std::any retVal;
   if (pd<flow>(tmp)) {

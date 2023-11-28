@@ -27,16 +27,16 @@ std::any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx) {
 }
 //- Stands for: **t**yped **f**unction **p**arameter **def**inition
 std::any EvalVisitor::visitTfpdef(Python3Parser::TfpdefContext *ctx) {
-  return ctx->getText();
+  return ctx->NAME()->getText();
 }
 // TODO
 std::any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx) {
   std::string name = ctx->NAME()->getText();
-  //std::cerr<<name;
+  // std::cerr<<name;
   f.create(name, ctx);
-  //std::cerr<<name;
-  // evalvisitor 遍历树的函数指针
-  // ctx 存树上节点的子信息
+  // std::cerr<<name;
+  //  evalvisitor 遍历树的函数指针
+  //  ctx 存树上节点的子信息
   return {};
 }
 
@@ -50,26 +50,28 @@ EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
     auto &&v = visitWhile_stmt(ctx->while_stmt());
     if (pd<flow>(v))
       return v;
-    else {return {};}
+    else {
+      return {};
+    }
   } else if (ctx->funcdef()) {
     visitFuncdef(ctx->funcdef());
     return {};
   }
-    
+
   return {};
 }
 
 std::any EvalVisitor::visitSmall_stmt(Python3Parser::Small_stmtContext *ctx) {
-  
+
   if (ctx->expr_stmt()) {
     return visitExpr_stmt(ctx->expr_stmt());
-  } else if(ctx->flow_stmt()) {
+  } else if (ctx->flow_stmt()) {
     return visitFlow_stmt(ctx->flow_stmt());
-  }
-  else return {};
+  } else
+    return {};
 }
 std::any EvalVisitor::visitSimple_stmt(Python3Parser::Simple_stmtContext *ctx) {
-  
+
   return visitSmall_stmt(ctx->small_stmt());
 }
 std::any EvalVisitor::visitStmt(Python3Parser::StmtContext *ctx) {
@@ -87,7 +89,7 @@ std::any EvalVisitor::visitFlow_stmt(Python3Parser::Flow_stmtContext *ctx) {
     return flow(FLOWSTMT::BREAK, {});
   else if (ctx->continue_stmt())
     return flow(FLOWSTMT::CONTINUE, {});
-  else if (ctx->return_stmt()){
+  else if (ctx->return_stmt()) {
     return visitReturn_stmt(ctx->return_stmt());
   }
   return {};
@@ -95,11 +97,10 @@ std::any EvalVisitor::visitFlow_stmt(Python3Parser::Flow_stmtContext *ctx) {
 
 std::any EvalVisitor::visitReturn_stmt(Python3Parser::Return_stmtContext *ctx) {
   if (ctx->testlist()) {
-    
+
     return flow(FLOWSTMT::RETURN, std::move(visitTestlist(ctx->testlist())));
-  }
-  else {
-    //std::cerr<<ctx->depth()<<std::endl;
+  } else {
+    // std::cerr<<ctx->depth()<<std::endl;
     return flow(FLOWSTMT::RETURN, std::vector<std::any>());
   }
 }
@@ -113,6 +114,7 @@ std::any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx) {
   int sz = y.size(), i = 0;
   for (; i < sz; ++i) {
     std::any &&z = visitTest(y[i]);
+    simply(z);
     if (toBool(z))
       return visitSuite(zz[i]);
   }
@@ -121,10 +123,10 @@ std::any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx) {
   return {};
 }
 
-//while 循环最后一项退出时报错
-//捆绑 
-//visittest 判定是否正确 正确运行
-//visitsuite 判定返回结果，还是有bug，指向错误
+// while 循环最后一项退出时报错
+// 捆绑
+// visittest 判定是否正确 正确运行
+// visitsuite 判定返回结果，还是有bug，指向错误
 std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
   //
   if (!ctx->WHILE())
@@ -132,9 +134,11 @@ std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
   while (true) {
     auto y = ctx->test();
     std::any &&z = visitTest(y);
+    simply(z);
     if (toBool(z)) {
       auto tmp = visitSuite(ctx->suite());
-      if (non(tmp)|| (pd<std::vector<std::any>>(tmp) && Cast<std::vector<std::any>>(tmp).empty()))
+      if (non(tmp) || (pd<std::vector<std::any>>(tmp) &&
+                       Cast<std::vector<std::any>>(tmp).empty()))
         continue;
       if (pd<flow>(tmp)) {
         auto z = Cast<flow>(tmp);
@@ -145,14 +149,14 @@ std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
         else if (z.word == FLOWSTMT::RETURN)
           return z;
       }
-    } else 
+    } else
       break;
   }
   return {};
 }
 
 std::any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx) {
-  
+
   if (auto test = ctx->simple_stmt()) {
     auto &&tmp = visitSimple_stmt(test);
     if (pd<flow>(tmp))
@@ -171,25 +175,25 @@ std::any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx) {
 }
 
 std::any EvalVisitor::visitTest(Python3Parser::TestContext *ctx) {
-  
-  if(!ctx->or_test()){
+
+  if (!ctx->or_test()) {
     return visitChildren(ctx);
-  }
-  else{
+  } else {
     return visitOr_test(ctx->or_test());
-  }  
+  }
   // ctx->or_test()->and_test()->assign();
 }
 
 std::any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx) {
   //
-  if (!ctx->OR(0)){
+  if (!ctx->OR(0)) {
     return visitChildren(ctx);
   }
-  //std::cerr<<ctx->depth()<<std::endl;
+  // std::cerr<<ctx->depth()<<std::endl;
   auto tmp = ctx->and_test();
   for (auto temp : tmp) {
     auto &&var = visitAnd_test(temp);
+    simply(var);
     if (toBool(var))
       return true;
   }
@@ -197,7 +201,7 @@ std::any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx) {
 }
 
 std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
-  
+
   if (!ctx->AND(0)) {
     return visitChildren(ctx); //
   }
@@ -206,6 +210,7 @@ std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
     return true;
   for (auto y : tmp) {
     auto &&z = visitNot_test(y);
+    simply(z);
     if (!toBool(z))
       return false;
   }
@@ -214,10 +219,9 @@ std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
 
 std::any EvalVisitor::visitNot_test(Python3Parser::Not_testContext *ctx) {
   if (!ctx->NOT()) {
-    
+
     return visitComparison(ctx->comparison());
-  }
-  else {
+  } else {
     auto &&tmp = visitNot_test(ctx->not_test());
     simply(tmp);
     return !toBool(tmp);
@@ -304,7 +308,6 @@ std::any EvalVisitor::visitTerm(Python3Parser::TermContext *ctx) {
 }
 
 std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
-  //'+' '-'
   if (ctx->factor()) {
     auto &&rvalue = visitFactor(ctx->factor());
     simply(rvalue);
@@ -322,7 +325,6 @@ std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
 std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
   if (!ctx->ASSIGN(0) && !ctx->augassign())
     return visitChildren(ctx);
-  //std::cerr<<"Expr_stmt"<<std::endl;
   auto var = ctx->testlist();
   char tp = '=';
   if (ctx->augassign()) {
@@ -339,8 +341,7 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
       tp = '*';
     else if (op->SUB_ASSIGN())
       tp = '-';
-    
-        std::vector<std::any> x =
+    std::vector<std::any> x =
         Cast<std::vector<std::any>>(visitTestlist(var[0]));
     std::vector<std::any> y =
         Cast<std::vector<std::any>>(visitTestlist(var[1]));
@@ -355,15 +356,14 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
   } else {
     auto rhs = Cast<std::vector<std::any>>(visitTestlist(var.back()));
     for (auto &_rhs : rhs)
-      simply(_rhs);//std::cerr<<"rhs"<<_rhs;
-    static int cd = var.size() - 1;
-    // std::cerr<<"Expr_stmt"<<" "<<cd<<std::endl;
+      simply(_rhs); // std::cerr<<"rhs"<<_rhs;
+    int cd = var.size() - 1;
     for (int i = 0; i < cd; ++i) {
-      //std::cerr<<233;
+      // std::cerr<<233;
       auto lhs = Cast<std::vector<std::any>>(visitTestlist(var[i]));
-      static int range = std::min(lhs.size(), rhs.size());
+      int range = std::min(lhs.size(), rhs.size());
       for (int j = 0; j < range; ++j) {
-        if (!pd<std::pair<std::string, int>>(lhs[j])){
+        if (!pd<std::pair<std::string, int>>(lhs[j])) {
           continue;
         }
         scope.change(Cast<std::pair<std::string, int>>(lhs[j]), rhs[j], '=');
@@ -380,41 +380,39 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
   if (ctx->trailer()) {
     auto arglist = ctx->trailer()->arglist();
     std::string tmp;
-    //std::cerr<<233;
-    if(pd<std::pair<std::string, int>>(v))
+    if (pd<std::pair<std::string, int>>(v))
       tmp = Cast<std::pair<std::string, int>>(v).first;
     else
       tmp = Cast<std::string>(v);
-    if(!arglist && (tmp == "print" || tmp == "int" || tmp == "bool" || tmp == "float" || tmp == "str")){
+    if (!arglist &&
+        (tmp == "int" || tmp == "bool" || tmp == "float" || tmp == "str"))
       return {};
-    }
     std::vector<Python3Parser::ArgumentContext *> argument;
-    if(arglist) argument = arglist->argument();
-    // 变量返回pair<std::string,int>
-    
-      std::vector<std::any> realArgument;
-      for (auto i : argument)
-        realArgument.emplace_back(visitArgument(i));
-      // std::cerr << "Atom_expr" << realArgument.back() << " ";
-      //  Specifically builtin_func tpdir
-      int tp = 0;
-      if (tmp == "int")
-        return toInt(realArgument[0]);
-      else if (tmp == "bool")
-        return toBool(realArgument[0]);
-      else if (tmp == "float")
-        return toFloat(realArgument[0]);
-      else if (tmp == "str")
-        return toStr(realArgument[0]);
-      else if(tmp == "print") {
-        func_print(realArgument);
-        return {};
-      }else {
-        auto tmp1 = f.func(tmp, arglist);
-        //f.func(std::string, Python3Parser::ArglistContext *)
-        return tmp1;
-      }
-      //std::cerr<<ctx->getText();
+    if (arglist)
+      argument = arglist->argument();
+    //调用时给的值 
+    std::vector<std::any> realArgument;
+    for (auto i : argument)
+      realArgument.emplace_back(visitArgument(i));
+    //  Specifically builtin_func tpdir
+    if (tmp == "int")
+      return toInt(realArgument[0]);
+    else if (tmp == "bool")
+      return toBool(realArgument[0]);
+    else if (tmp == "float")
+      return toFloat(realArgument[0]);
+    else if (tmp == "str")
+      return toStr(realArgument[0]);
+    else if (tmp == "print") {
+      func_print(realArgument);
+      return {};
+    } else {
+      //if(tmp == "miller_rabin")std::cerr<<argument.size()<<std::endl;
+      auto tmp1 = f.func(tmp, argument);
+      // f.func(std::string, Python3Parser::ArglistContext *)
+      return tmp1;
+    }
+    // std::cerr<<ctx->getText();
   } else
     return v;
 }
@@ -485,10 +483,8 @@ std::any EvalVisitor::visitArgument(Python3Parser::ArgumentContext *ctx) {
   } else {
     // 返回一个值 已知变量需要解析为值
     auto &&var = visitTest(ctx->test(0));
-     //std::cerr << "Argument" << var << std::endl;
-    if (pd<std::pair<std::string, int>>(var))
-      return scope.getval(Cast<std::pair<std::string, int>>(var));
-    else
-      return var;
+    // std::cerr << "Argument" << var << std::endl;
+    simply(var);
+    return var;
   }
 }

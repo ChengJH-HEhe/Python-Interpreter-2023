@@ -22,7 +22,7 @@ struct function {
   std::string NAME;
   std::unordered_map<funcptr, std::unordered_map<std::string, std::any>> Def;
   std::unordered_map<funcptr, std::vector<std::string>> varName;
-  std::any func(std::string, Python3Parser::ArglistContext*);
+  std::any func(std::string str,  std::vector<Python3Parser::ArgumentContext *>);
   void create(std::string, funcptr);
 };
 void func_print(std::vector<std::any>);
