@@ -341,7 +341,7 @@ void division(int2048 &a, int2048 b) {
 }
 int2048 getInv(int2048 &a) {
   int m = a.v.size();
-  if (m < 80) {
+  if (m < 20) {
     // brute
     int2048 c(int2048(1) <<= 2 * m);
     division(c, a);
