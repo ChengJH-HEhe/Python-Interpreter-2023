@@ -65,16 +65,15 @@ void function::create(std::string str, funcptr ctx) {
   //a b c
   scope.mp[0][str] = ctx;
 }
+int cnt;
 
 std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
   // 新建变量空间，初始化函数定义
   auto ctx = scope.find_func(str);
-  //std::cerr<<(ctx->NAME()->getText())<<" ";
   auto list = ctx->parameters()->typedargslist();
-
   std::vector<std::string> vec;// all the variable names
   std::unordered_map<std::string, std::any> mpFunc;// corresponding values r
-
+  scope.mp.push_back(mpFunc);
   if (list) {
     auto All = list->tfpdef();   // 未设初值
     auto Default = list->test(); // 已设初值
@@ -82,16 +81,15 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
     //为变量申请空间
     for (int i = 0; i < n - m; ++i) {
       vec.push_back(All[i]->getText());
-      mpFunc[vec.back()] = {};
+      scope.mp.back()[vec.back()] = {};
     }
     for (int i = 0; i < m; ++i) {
       auto val = eva.visit(Default[i]);
-      mpFunc[All[i + n - m]->getText()] = val;
       vec.push_back(All[i + n - m]->NAME()->getText());
+      scope.mp.back()[vec.back()] = val;
     }
     // ctx mpFUNC
   }
-  scope.mp.push_back(mpFunc);
   //std::cerr<<Def.size();
   if (Arg) {
     auto argument = Arg->argument();
@@ -114,7 +112,6 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
     }
   }
   auto &&tmp = eva.visit(ctx->suite());
-
     // 先化简后清空
   std::any retVal;
   if (pd<flow>(tmp)) {
@@ -130,7 +127,6 @@ std::any function::func(std::string str, Python3Parser::ArglistContext* Arg) {
       retVal = finalResult;
   } else
     retVal = {};
-  scope.mp.back().clear();
   scope.mp.pop_back();
   // 化简结果
   return retVal;
@@ -144,6 +140,7 @@ void func_print(std::vector<std::any> x) {
       // pair<std::string, std::any> \ 一个值
       std::cout << x[i] << " ";
     }
-  std::cout << x.back() << std::endl;
+  if(!x.empty())std::cout << x.back();
+  std::cout << std::endl;
 }
 // 在全局新建五个内置函数

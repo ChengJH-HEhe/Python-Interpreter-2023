@@ -32,7 +32,9 @@ std::any EvalVisitor::visitTfpdef(Python3Parser::TfpdefContext *ctx) {
 // TODO
 std::any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx) {
   std::string name = ctx->NAME()->getText();
+  //std::cerr<<name;
   f.create(name, ctx);
+  //std::cerr<<name;
   // evalvisitor 遍历树的函数指针
   // ctx 存树上节点的子信息
   return {};
@@ -119,17 +121,19 @@ std::any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx) {
   return {};
 }
 
+//while 循环最后一项退出时报错
+//捆绑 
+//visittest 判定是否正确 正确运行
+//visitsuite 判定返回结果，还是有bug，指向错误
 std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
   //
   if (!ctx->WHILE())
     return {};
-  int cnt = 0;
   while (true) {
     auto y = ctx->test();
     std::any &&z = visitTest(y);
-    
     if (toBool(z)) {
-      auto &&tmp = visitSuite(ctx->suite());
+      auto tmp = visitSuite(ctx->suite());
       if (non(tmp)|| (pd<std::vector<std::any>>(tmp) && Cast<std::vector<std::any>>(tmp).empty()))
         continue;
       if (pd<flow>(tmp)) {
@@ -139,9 +143,9 @@ std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
         else if (z.word == FLOWSTMT::CONTINUE)
           continue;
         else if (z.word == FLOWSTMT::RETURN)
-          return tmp;
+          return z;
       }
-    } else
+    } else 
       break;
   }
   return {};
