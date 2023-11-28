@@ -1,3 +1,5 @@
+//#47 元组行为 a,b = g(a,b)
+
 #include "funcvar.h"
 #include "Any_op.h"
 #include "Evalvisitor.h"

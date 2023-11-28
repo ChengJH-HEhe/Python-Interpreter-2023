@@ -334,6 +334,7 @@ std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
 
 // TODO/done
 
+// 元组 操作
 std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
   if (!ctx->ASSIGN(0) && !ctx->augassign())
     return visitChildren(ctx);
@@ -415,6 +416,7 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
       else if (tmp == "str")
         return toStr(realArgument[0]);
       else {
+        //std::cerr<<argument.size()<<std::endl;
         func_print(realArgument);
         return {};
       }
@@ -443,6 +445,7 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
         x == "print") {
       return x;
     } else {
+      //std::cerr<<x<<" "<<scope.find(x)<<" "<<scope.mp[scope.find(x)][x]<<std::endl;
       return make_pair(x, scope.find(x));
     }
   } else if (ctx->NUMBER()) {

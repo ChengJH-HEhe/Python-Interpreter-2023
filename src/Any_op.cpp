@@ -16,10 +16,14 @@ extern Scope scope;
 bool non(std::any x) { return !x.has_value(); }
 
 void simply(std::any &x) {
+
   if (pd<std::vector<std::any>>(x)) {
     std::vector<std::any> &y = Cast<std::vector<std::any>>(x);
-    for (auto &z : y)
-      simply(z);
+    if(y.empty())x = {};
+    else
+      for (auto &z : y)
+        simply(z);
+    if(y.size()==1) x = y[0];
   } else if (pd<std::pair<std::string, int>>(x)) {
     auto tmp = Cast<std::pair<std::string, int>>(x);
     x = scope.mp[tmp.second][tmp.first];
@@ -32,7 +36,7 @@ double toFloat(std::any x) {
   } else if (pd<Bigint>(x)) {
     return Cast<Bigint>(x).toDouble();
   } else if (pd<double>(x)) {
-    return (Cast<float>(x));
+    return (Cast<double>(x));
   } else if (pd<bool>(x)) {
     return Cast<bool>(x) ? 1.0 : 0.0;
   } else
@@ -56,8 +60,6 @@ Bigint toInt(std::any x) {
     return Bigint(Cast<std::string>(x));
   } else if (pd<Bigint>(x)) {
     return Cast<Bigint>(x);
-  } else if (pd<double>(x)) {
-    return Bigint(int(Cast<double>(x)));
   } else if (pd<bool>(x)) {
     return Cast<bool>(x) ? Bigint(1ll) : Bigint(0);
   } else
@@ -68,12 +70,14 @@ std::string toStr(std::any x) {
     return Cast<std::string>(x);
   } else if (pd<int>(x)) {
     return std::to_string(Cast<int>(x));
-  } else if (pd<double>(x)) {
+  } else if (pd<Bigint>(x)) {
+    return Cast<Bigint>(x).toString();
+  }else if (pd<double>(x)) {
     return std::to_string(Cast<double>(x));
   } else if (pd<bool>(x)) {
     return Cast<bool>(x) ? "True" : "False";
   } else
-    return "";
+    return "None";
 }
 
 // 四则运算 + - * / // %
@@ -97,9 +101,9 @@ std::any operator+(std::any x, std::any y) {
 }
 std::any operator-(std::any x, std::any y) {
   if (pd<double>(x) || pd<double>(y)) {
-    return toFloat(x) + toFloat(y);
+    return toFloat(x) - toFloat(y);
   } else
-    return toInt(x) + toInt(y);
+    return toInt(x) - toInt(y);
 }
 std::any operator*(std::any x, std::any y) {
   if (pd<std::string>(x) || pd<std::string>(y)) {
@@ -152,10 +156,10 @@ bool operator==(std::any x, std::any y) {
     return non(x) && non(y);
   else if (pd<std::string>(x) || pd<std::string>(y))
     return pd<std::string>(y) && pd<std::string>(x) &&
-           (Cast<std::string>(x) < Cast<std::string>(y));
+           (Cast<std::string>(x) == Cast<std::string>(y));
   else if (pd<double>(x) || pd<double>(y))
     return toFloat(x) == toFloat(y);
-  else if (pd<Bigint>(x))
+  else if (pd<Bigint>(x) || pd<Bigint>(y))
     return toInt(x) == toInt(y);
   else
     return toBool(x) == toBool(y);
@@ -229,7 +233,7 @@ std::any setNega(std::any a) {
     return tmp;
   } else {
     if(pd<Bigint>(a)) return -Cast<Bigint>(a);
-    else if(pd<double>(a)) return -Cast<double>(a);
+    else if(pd<double>(a)) return std::cerr<<-Cast<double>(a)<<std::endl, -Cast<double>(a);
     else return -toInt(a);
   }
 }
