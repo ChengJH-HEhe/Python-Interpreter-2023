@@ -1,7 +1,0 @@
-#Function Test
-def foo(b,c=2,a=3):
-    print(a)
-i = 0
-while i < 10:
-    foo(i)
-    i += 1
