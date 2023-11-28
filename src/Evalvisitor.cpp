@@ -32,9 +32,7 @@ std::any EvalVisitor::visitTfpdef(Python3Parser::TfpdefContext *ctx) {
 // TODO
 std::any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx) {
   std::string name = ctx->NAME()->getText();
-  // std::cerr<<name;
   f.create(name, ctx);
-  // std::cerr<<name;
   //  evalvisitor 遍历树的函数指针
   //  ctx 存树上节点的子信息
   return {};
@@ -44,12 +42,13 @@ std::any
 EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
   if (ctx->if_stmt()) {
     auto &&v = visitIf_stmt(ctx->if_stmt());
-    if (pd<flow>(v))
-      return v;
+    if (pd<flow>(v)){
+      return Cast<flow>(v);
+    }
   } else if (ctx->while_stmt()) {
     auto &&v = visitWhile_stmt(ctx->while_stmt());
     if (pd<flow>(v))
-      return v;
+      return Cast<flow>(v);
     else {
       return {};
     }
@@ -66,6 +65,7 @@ std::any EvalVisitor::visitSmall_stmt(Python3Parser::Small_stmtContext *ctx) {
   if (ctx->expr_stmt()) {
     return visitExpr_stmt(ctx->expr_stmt());
   } else if (ctx->flow_stmt()) {
+    
     return visitFlow_stmt(ctx->flow_stmt());
   } else
     return {};
@@ -76,6 +76,7 @@ std::any EvalVisitor::visitSimple_stmt(Python3Parser::Simple_stmtContext *ctx) {
 }
 std::any EvalVisitor::visitStmt(Python3Parser::StmtContext *ctx) {
   if (ctx->simple_stmt()) {
+    
     return visitSimple_stmt(ctx->simple_stmt());
   } else if (ctx->compound_stmt()) {
     return visitCompound_stmt(ctx->compound_stmt());
@@ -86,9 +87,10 @@ std::any EvalVisitor::visitStmt(Python3Parser::StmtContext *ctx) {
 std::any EvalVisitor::visitFlow_stmt(Python3Parser::Flow_stmtContext *ctx) {
 
   if (ctx->break_stmt())
-    return flow(FLOWSTMT::BREAK, {});
-  else if (ctx->continue_stmt())
-    return flow(FLOWSTMT::CONTINUE, {});
+    return flow(FLOWSTMT::BREAK, std::vector<std::any>());
+  else if (ctx->continue_stmt()){
+    return flow(FLOWSTMT::CONTINUE, std::vector<std::any>());
+  }
   else if (ctx->return_stmt()) {
     return visitReturn_stmt(ctx->return_stmt());
   }
@@ -100,7 +102,6 @@ std::any EvalVisitor::visitReturn_stmt(Python3Parser::Return_stmtContext *ctx) {
 
     return flow(FLOWSTMT::RETURN, std::move(visitTestlist(ctx->testlist())));
   } else {
-    // std::cerr<<ctx->depth()<<std::endl;
     return flow(FLOWSTMT::RETURN, std::vector<std::any>());
   }
 }
@@ -145,8 +146,9 @@ std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
         auto z = Cast<flow>(tmp);
         if (z.word == FLOWSTMT::BREAK)
           break;
-        else if (z.word == FLOWSTMT::CONTINUE)
+        else if (z.word == FLOWSTMT::CONTINUE){
           continue;
+        }
         else if (z.word == FLOWSTMT::RETURN)
           return z;
       }
@@ -167,7 +169,10 @@ std::any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx) {
     if (tmp.empty())
       return {};
     for (int i = 0; i < tmp.size(); ++i) {
+      // 2 continue;
+      
       auto &&temp = visitStmt(tmp[i]);
+      
       if (pd<flow>(temp))
         return Cast<flow>(temp);
     }
@@ -190,7 +195,6 @@ std::any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx) {
   if (!ctx->OR(0)) {
     return visitChildren(ctx);
   }
-  // std::cerr<<ctx->depth()<<std::endl;
   auto tmp = ctx->and_test();
   for (auto temp : tmp) {
     auto &&var = visitAnd_test(temp);
@@ -217,6 +221,13 @@ std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
   }
   return true;
 }
+
+/*
+visitFlow_stmt
+visitStmt
+visitSuite
+visitIf_stmt
+*/
 
 std::any EvalVisitor::visitNot_test(Python3Parser::Not_testContext *ctx) {
   if (!ctx->NOT()) {
@@ -357,10 +368,9 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
   } else {
     auto rhs = Cast<std::vector<std::any>>(visitTestlist(var.back()));
     for (auto &_rhs : rhs)
-      simply(_rhs); // std::cerr<<"rhs"<<_rhs;
+      simply(_rhs); 
     int cd = var.size() - 1;
     for (int i = 0; i < cd; ++i) {
-      // std::cerr<<233;
       auto lhs = Cast<std::vector<std::any>>(visitTestlist(var[i]));
       int range = std::min(lhs.size(), rhs.size());
       for (int j = 0; j < range; ++j) {
@@ -409,12 +419,9 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
         return {};
       }
     } else {
-      // if(tmp == "miller_rabin")std::cerr<<argument.size()<<std::endl;
       auto tmp1 = f.func(tmp, argument);
-      // f.func(std::string, Python3Parser::ArglistContext *)
       return tmp1;
     }
-    // std::cerr<<ctx->getText();
   } else
     return v;
 }
@@ -453,7 +460,6 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
     for (auto y : x) {
       std::string tmp = y->getText();
       int sz = tmp.size();
-      // std::cerr<<sz<<std::endl;
       s += tmp.substr(1, sz - 2);
     }
     return std::move(s);
