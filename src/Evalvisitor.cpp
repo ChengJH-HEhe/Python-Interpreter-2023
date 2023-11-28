@@ -127,6 +127,7 @@ std::any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx) {
 // 捆绑
 // visittest 判定是否正确 正确运行
 // visitsuite 判定返回结果，还是有bug，指向错误
+// 解决方法：变量类型统一 vector<any>空指针也是{}
 std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
   //
   if (!ctx->WHILE())
@@ -384,30 +385,31 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
       tmp = Cast<std::pair<std::string, int>>(v).first;
     else
       tmp = Cast<std::string>(v);
-    if (!arglist &&
-        (tmp == "int" || tmp == "bool" || tmp == "float" || tmp == "str"))
-      return {};
     std::vector<Python3Parser::ArgumentContext *> argument;
     if (arglist)
       argument = arglist->argument();
-    //调用时给的值 
+    // 调用时给的值
     std::vector<std::any> realArgument;
-    for (auto i : argument)
-      realArgument.emplace_back(visitArgument(i));
+    
     //  Specifically builtin_func tpdir
-    if (tmp == "int")
-      return toInt(realArgument[0]);
-    else if (tmp == "bool")
-      return toBool(realArgument[0]);
-    else if (tmp == "float")
-      return toFloat(realArgument[0]);
-    else if (tmp == "str")
-      return toStr(realArgument[0]);
-    else if (tmp == "print") {
-      func_print(realArgument);
-      return {};
+    if (tmp == "int" || tmp == "bool" || tmp == "float" || tmp == "str" ||
+        tmp == "print") {
+      for (auto i : argument)
+        realArgument.emplace_back(visitArgument(i));
+      if (tmp == "int")
+        return toInt(realArgument[0]);
+      else if (tmp == "bool")
+        return toBool(realArgument[0]);
+      else if (tmp == "float")
+        return toFloat(realArgument[0]);
+      else if (tmp == "str")
+        return toStr(realArgument[0]);
+      else {
+        func_print(realArgument);
+        return {};
+      }
     } else {
-      //if(tmp == "miller_rabin")std::cerr<<argument.size()<<std::endl;
+      // if(tmp == "miller_rabin")std::cerr<<argument.size()<<std::endl;
       auto tmp1 = f.func(tmp, argument);
       // f.func(std::string, Python3Parser::ArglistContext *)
       return tmp1;
@@ -451,7 +453,7 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
     for (auto y : x) {
       std::string tmp = y->getText();
       int sz = tmp.size();
-      //std::cerr<<sz<<std::endl;
+      // std::cerr<<sz<<std::endl;
       s += tmp.substr(1, sz - 2);
     }
     return std::move(s);

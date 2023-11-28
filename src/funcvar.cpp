@@ -153,14 +153,15 @@ std::any function::func(std::string str,  std::vector<Python3Parser::ArgumentCon
 }
 
 void func_print(std::vector<std::any> x) {
-  if (x.empty())
+  if (x.empty()){
+    std::cout<<std::endl;
     return;
+  }
   if (x.size() != 1)
     for (int i = 0; i < x.size() - 1; ++i) {
       // pair<std::string, std::any> \ 一个值
       std::cout << x[i] << " ";
     }
-  if(!x.empty())std::cout << x.back();
-  std::cout << std::endl;
+  std::cout << x.back() << std::endl;
 }
 // 在全局新建五个内置函数
