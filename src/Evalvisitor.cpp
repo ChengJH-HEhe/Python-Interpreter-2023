@@ -370,6 +370,8 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {
     auto rhs = Cast<std::vector<std::any>>(visitTestlist(var.back()));
     for (auto &_rhs : rhs)
       simply(_rhs); 
+    if(pd<std::vector<std::any>>(rhs[0]))
+      rhs = Cast<std::vector<std::any>>(rhs[0]);
     int cd = var.size() - 1;
     for (int i = 0; i < cd; ++i) {
       auto lhs = Cast<std::vector<std::any>>(visitTestlist(var[i]));

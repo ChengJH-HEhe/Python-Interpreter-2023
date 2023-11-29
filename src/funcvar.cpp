@@ -1,4 +1,4 @@
-//#47 元组行为 a,b = g(a,b)
+// #47 元组行为 a,b = g(a,b)
 
 #include "funcvar.h"
 #include "Any_op.h"
@@ -31,13 +31,13 @@ int Scope::find(std::string x) {
 }
 
 funcptr Scope::find_func(std::string x) {
-  if (mp[0].find(x) != mp[0].end()){
-    //std::cerr<<2333;
+  if (mp[0].find(x) != mp[0].end()) {
+    // std::cerr<<2333;
     auto tmp = Cast<funcptr>(mp[0][x]);
-    //std::cerr<<2333;
+    // std::cerr<<2333;
     return tmp;
-  }
-  else return nullptr;
+  } else
+    return nullptr;
 }
 void Scope::change(std::pair<std::string, int> a, std::any b, char c) {
   int pos = a.second;
@@ -61,11 +61,23 @@ std::any Scope::getval(std::pair<std::string, int> a) {
 }
 
 // 放克！
+// phonk
 void function::create(std::string str, funcptr ctx) {
   // arglist
   //    3
-  //a b c
+  // a b c
   scope.mp[0][str] = ctx;
+  Default[ctx] = std::vector<std::any>();
+  if (ctx->parameters()) {
+    auto list = ctx->parameters()->typedargslist();
+    if (list) {
+      auto Def = list->test(); // 已设初值 arith_expr
+      //std::cerr << Def.size();
+      // 为变量申请空间
+      for (int i = 0; i < Def.size(); ++i)
+        Default[ctx].push_back(eva.visit(Def[i]));
+    }
+  }
 }
 int cnt;
 
@@ -79,53 +91,53 @@ list = 2
 ALL x, n
 default 空
 调用： miller_rabin(i,x)
-Arg i = 2 
+Arg i = 2
 default x = 2
 */
-std::any function::func(std::string str,  std::vector<Python3Parser::ArgumentContext *> argument) {
+std::any
+function::func(std::string str,
+               std::vector<Python3Parser::ArgumentContext *> argument) {
   // 新建变量空间，初始化函数定义
   auto ctx = scope.find_func(str);
-  auto list = ctx->parameters()->typedargslist();
 
-  std::vector<std::string> vec;// all the variable names
+  std::vector<std::string> vec; // all the variable names
   std::vector<std::any> realArgument;
-
-  //把初值先算出来。
-  if(argument.size()) {
+  // 把初值先算出来。
+  if (argument.size()) {
     // a = 5 或 std::any
     // 1,1,4,5,1,4, arg , 5
     //                    b
-    int szArg = argument.size(); 
-    for(int i = 0; i < szArg; ++i)
+    int szArg = argument.size();
+    for (int i = 0; i < szArg; ++i)
       realArgument.push_back(eva.visit(argument[i]));
   }
-  std::unordered_map<std::string, std::any> mpFunc;// corresponding values r
+  std::unordered_map<std::string, std::any> mpFunc; // corresponding values r
   scope.mp.push_back(std::move(mpFunc));
+  auto list = ctx->parameters()->typedargslist();
   if (list) {
-    auto All = list->tfpdef();   // 未设初值
-    auto Default = list->test(); // 已设初值 arith_expr
-    int n = All.size(), m = Default.size();
-    //为变量申请空间
+    auto All = list->tfpdef();                // 未设初值
+    std::vector<std::any> Def = Default[ctx]; // 已设初值 arith_expr
+    int n = All.size(), m = Def.size();
+    // 为变量申请空间
     for (int i = 0; i < n - m; ++i) {
       vec.push_back(All[i]->getText());
       scope.mp.back()[vec.back()] = {};
     }
     for (int i = 0; i < m; ++i) {
       vec.push_back(All[i + n - m]->NAME()->getText());
-      scope.mp.back()[vec.back()] = eva.visit(Default[i]);
+      scope.mp.back()[vec.back()] = Def[i];
     }
-    // ctx mpFUNC
   }
-  
+
   if (argument.size()) {
-     // 已经给的值
-    int szFunc = vec.size(), szArg = realArgument.size();     // sz 为调用时的总长度
-    int nowpos = scope.mp.size() - 1;//目前层
+    // 已经给的值
+    int szFunc = vec.size(), szArg = realArgument.size(); // sz 为调用时的总长度
+    int nowpos = scope.mp.size() - 1;                     // 目前层
     for (int i = 0; i < szArg; ++i) {
       auto &&res = realArgument[i];
-      if(pd<std::pair<std::string, std::any>>(res)) {
+      if (pd<std::pair<std::string, std::any>>(res)) {
         auto pr = Cast<std::pair<std::string, std::any>>(res);
-        scope.change(make_pair(pr.first, nowpos), pr.second, '=');// c = 5
+        scope.change(make_pair(pr.first, nowpos), pr.second, '='); // c = 5
       } else {
         scope.change(make_pair(vec[i], nowpos), res, '='); // 1
       }
@@ -133,20 +145,22 @@ std::any function::func(std::string str,  std::vector<Python3Parser::ArgumentCon
   }
 
   auto &&tmp = eva.visit(ctx->suite());
-  //std::cout<<Cast<flow>(tmp).an;
-    // 先化简后清空
+  // std::cout<<Cast<flow>(tmp).an;
+  //  先化简后清空
   std::any retVal;
   if (pd<flow>(tmp)) {
     std::any finalResult = Cast<flow>(tmp).an;
-    if (non(finalResult)||(pd<std::vector<std::any>>(finalResult)
-      &&(Cast<std::vector<std::any>>(finalResult).empty())))
+    if (non(finalResult) ||
+        (pd<std::vector<std::any>>(finalResult) &&
+         (Cast<std::vector<std::any>>(finalResult).empty())))
       retVal = {};
     else if (pd<std::pair<std::string, int>>(finalResult)) {
       // 变量
       std::string s = Cast<std::pair<std::string, int>>(finalResult).first;
       retVal = scope.mp[scope.find(s)][s];
-    } else // if(pd<std::vector<std::any>>(finalResult.an))
+    } else {
       retVal = finalResult;
+    }
   } else
     retVal = {};
   scope.mp.pop_back();
@@ -155,8 +169,8 @@ std::any function::func(std::string str,  std::vector<Python3Parser::ArgumentCon
 }
 
 void func_print(std::vector<std::any> x) {
-  if (x.empty()){
-    std::cout<<std::endl;
+  if (x.empty()) {
+    std::cout << std::endl;
     return;
   }
   if (x.size() != 1)

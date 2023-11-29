@@ -16,7 +16,6 @@ extern Scope scope;
 bool non(std::any x) { return !x.has_value(); }
 
 void simply(std::any &x) {
-
   if (pd<std::vector<std::any>>(x)) {
     std::vector<std::any> &y = Cast<std::vector<std::any>>(x);
     if(y.empty())x = {};
