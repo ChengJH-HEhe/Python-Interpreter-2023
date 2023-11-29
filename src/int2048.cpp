@@ -1,4 +1,5 @@
 #include "int2048.h"
+#include "Any_op.h"
 
 namespace fft {
 bool on;
@@ -341,7 +342,7 @@ void division(int2048 &a, int2048 b) {
 }
 int2048 getInv(int2048 &a) {
   int m = a.v.size();
-  if (m < 20) {
+  if (m < 80) {
     // brute
     int2048 c(int2048(1) <<= 2 * m);
     division(c, a);
@@ -375,6 +376,15 @@ int2048 &int2048::operator/=(const int2048 &b1) {
     f = 1;
     return *this;
   }
+  if(sz1 < 38) {
+    // int2048转__int128 
+    __int128 lvalue = to__int(), rvalue = b.to__int();
+    lvalue /=rvalue;
+    v.clear();
+    while(lvalue) v.push_back(lvalue%10), lvalue/=10;
+    f = f1;
+    return *this;
+  }
   int2048 x(*this), y(b);
   if (sz1 > sz2 * 2) {
     int mb = sz1 - 2 * sz2;
@@ -382,14 +392,10 @@ int2048 &int2048::operator/=(const int2048 &b1) {
     sz2 += mb, sz1 += mb;
   }
   int2048 z = getInv(y);
-  // puts("233");
-  // for(auto i : y.v) {std::cout << i << " ";} std::cout << std::endl;
   // 微调
   z *= x;
   z >>= 2 * sz2;
-  // for(auto i : z.v) {std::cout << i << " ";} std::cout << std::endl;
   x = z * b;
-  // std::cout << *this << " " << x <<" " << b << std::endl;
   if ((*this - x >= b))
     z += 1;
   *this = z;

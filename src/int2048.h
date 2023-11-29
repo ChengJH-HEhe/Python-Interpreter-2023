@@ -44,6 +44,14 @@ public:
       s += std::to_string(*x);
     return s;
   }
+  __int128 to__int() {
+    __int128 s = 0;
+    if (!v.size())
+      return s;
+    for (auto x = v.rbegin(); x != v.rend(); ++x)
+      s = s * 10 + *x;
+    return s * f;
+  }
   int toInt()  {
     if (!v.size())
       return 0;
